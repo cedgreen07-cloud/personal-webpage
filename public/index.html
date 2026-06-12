@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal Tracker</title>
+<style>
+:root {
+  --bg: #000000;
+  --surface: #0a0a0b;
+  --surface2: #131315;
+  --surface3: #1b1b1e;
+  --border: #262629;
+  --accent: #d4af37; --accent-dim: rgba(212,175,55,.07);
+  --green: #d4af37; --green-dim: rgba(212,175,55,.07);
+  --blue:  #8a94a6; --blue-dim:  rgba(138,148,166,.07);
+  --purple:#a8a8b3; --purple-dim:rgba(168,168,179,.07);
+  --red:   #c4544a; --red-dim:   rgba(196,84,74,.08);
+  --orange:#d4af37; --orange-dim:rgba(212,175,55,.07);
+  --yellow:#d4af37; --yellow-dim:rgba(212,175,55,.07);
+  --teal:  #8a94a6; --teal-dim:  rgba(138,148,166,.07);
+  --text:  #d8d9dc; --muted: #55565c; --muted2: #8c8d94;
+  --r: 3px;
+  --mono: 'SF Mono','Cascadia Code','Consolas',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;font-size:15px;letter-spacing:.01em;background-image:radial-gradient(ellipse at top,rgba(255,255,255,.03),transparent 60%)}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:0}
+
+/* NAV */
+nav{display:flex;align-items:center;gap:4px;padding:16px 24px;border-bottom:1px solid var(--border);background:rgba(0,0,0,.6);backdrop-filter:blur(12px);position:sticky;top:0;z-index:200;flex-wrap:wrap}
+.logo{font-size:14px;font-weight:700;margin-right:auto;letter-spacing:.28em;text-transform:uppercase;color:var(--muted2);font-family:var(--mono)}
+.tab-btn{padding:8px 18px;border-radius:0;border:1px solid transparent;border-bottom:2px solid transparent;cursor:pointer;font-size:11px;font-weight:600;background:transparent;color:var(--muted);transition:all .18s;letter-spacing:.18em;text-transform:uppercase}
+.tab-btn:hover{color:var(--muted2)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--accent-dim);text-shadow:0 0 12px rgba(212,175,55,.5)}
+
+/* SECTIONS */
+.section{display:none;padding:24px;max-width:1000px;margin:0 auto;animation:fadeIn .2s}
+.section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* LAYOUT */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.four-col{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.five-col{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+@media(max-width:680px){.two-col,.three-col,.four-col,.five-col{grid-template-columns:1fr}}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;position:relative}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.18em;font-family:var(--mono)}
+
+/* STAT TILES */
+.stat-tile{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.stat-label{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;font-family:var(--mono)}
+.stat-value{font-size:24px;font-weight:700;line-height:1;font-family:var(--mono)}
+.stat-sub{font-size:12px;color:var(--muted2);margin-top:4px}
+.green{color:var(--green)}.blue{color:var(--blue)}.purple{color:var(--purple)}
+.red{color:var(--red)}.orange{color:var(--orange)}.yellow{color:var(--yellow)}.teal{color:var(--teal)}
+
+/* FORMS */
+.form-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.fg{display:flex;flex-direction:column;gap:5px;flex:1;min-width:110px}
+.fg label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.1em}
+input,select{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--r);padding:8px 11px;font-size:13px;outline:none;width:100%;transition:border-color .15s}
+input:focus,select:focus{border-color:var(--accent)}
+select option{background:var(--surface2)}
+.btn{padding:9px 16px;border-radius:var(--r);border:1px solid transparent;cursor:pointer;font-size:11px;font-weight:700;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.12em}
+.btn:hover{border-color:currentColor}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-green{background:transparent;color:var(--green);border-color:rgba(212,175,55,.3)}
+.btn-blue{background:transparent;color:var(--blue);border-color:rgba(138,148,166,.3)}
+.btn-purple{background:transparent;color:var(--purple);border-color:rgba(168,168,179,.3)}
+.btn-red-outline{background:transparent;color:var(--red);border-color:rgba(196,84,74,.3)}
+.btn-ghost{background:var(--surface2);color:var(--muted2);border-color:var(--border)}
+.btn-teal{background:transparent;color:var(--teal);border-color:rgba(138,148,166,.3)}
+.btn-orange{background:transparent;color:var(--orange);border-color:rgba(212,175,55,.3)}
+.del-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px 6px;border-radius:var(--r);font-size:14px;line-height:1;transition:color .15s}
+.del-btn:hover{color:var(--red)}
+
+/* ENTRIES */
+.entry-list{display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto;padding-right:2px}
+.entry{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-left:2px solid var(--border);border-radius:var(--r);padding:11px 14px}
+.entry-body{flex:1;min-width:0}
+.entry-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.entry-meta{font-size:11px;color:var(--muted2);margin-top:3px}
+.entry-value{font-size:14px;font-weight:700;white-space:nowrap;font-family:var(--mono)}
+.empty{text-align:center;padding:32px 0;color:var(--muted);font-size:13px;letter-spacing:.1em;text-transform:uppercase;font-family:var(--mono)}
+
+/* TAGS / BADGES */
+.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:99px;font-weight:700;margin-left:5px;vertical-align:middle}
+.badge{display:inline-block;font-size:11px;padding:3px 9px;border-radius:6px;font-weight:600}
+
+/* PROGRESS */
+.prog-bar{height:5px;border-radius:99px;background:var(--surface3);overflow:hidden;margin-top:6px}
+.prog-fill{height:100%;border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+/* RECOVERY RING */
+.recovery-ring-wrap{display:flex;align-items:center;gap:20px;padding:8px 0}
+.ring-svg{flex-shrink:0}
+.ring-info{flex:1}
+.ring-score{font-size:42px;font-weight:700;line-height:1;font-family:var(--mono)}
+.ring-label{font-size:12px;color:var(--muted2);margin-top:4px}
+
+/* WHOOP CARDS */
+.whoop-day-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px}
+.whoop-day-date{font-size:10px;color:var(--muted);font-weight:600;font-family:var(--mono);text-transform:uppercase;letter-spacing:.12em}
+.whoop-metric{display:flex;justify-content:space-between;font-size:12px}
+.whoop-metric-label{color:var(--muted2)}
+.whoop-metric-value{font-weight:700;font-family:var(--mono)}
+
+/* INVESTMENT TABLE */
+.inv-table{width:100%;border-collapse:collapse;font-size:13px}
+.inv-table th{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.16em;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);font-family:var(--mono)}
+.inv-table td{padding:10px 10px;border-bottom:1px solid var(--border);vertical-align:middle;font-family:var(--mono)}
+.inv-table tr:last-child td{border-bottom:none}
+.inv-table tr:hover td{background:var(--surface2)}
+
+/* WORK CALENDAR */
+.week-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+.day-cell{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:8px 6px;text-align:center;font-size:11px}
+.day-cell .day-name{color:var(--muted);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.1em}
+.day-cell .day-hrs{font-size:16px;font-weight:700;font-family:var(--mono)}
+.day-cell.has-hours{border-color:rgba(212,175,55,.35);box-shadow:inset 0 0 10px -6px rgba(212,175,55,.5)}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:16px 0}
+
+/* CONNECT BANNER */
+.connect-banner{background:var(--surface2);border:1px solid var(--border);border-left:2px solid var(--red);border-radius:var(--r);padding:20px 24px;display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.connect-banner.connected{border-left-color:var(--accent)}
+.banner-icon{display:none}
+.banner-text{flex:1}
+.banner-title{font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-family:var(--mono)}
+.banner-sub{font-size:12px;color:var(--muted2);margin-top:5px}
+
+/* Pill selectors */
+.pill-group{display:flex;gap:6px;flex-wrap:wrap}
+.pill{padding:5px 13px;border-radius:var(--r);border:1px solid var(--border);background:transparent;color:var(--muted2);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.08em}
+.pill:hover{border-color:var(--muted2);color:var(--text)}
+.pill.active{background:var(--accent-dim);border-color:rgba(212,175,55,.35);color:var(--accent)}
+
+/* Tooltip */
+[data-tip]{position:relative}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;white-space:nowrap;color:var(--text);pointer-events:none;z-index:999}
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="logo">Tracker</span>
+  <button class="tab-btn active" data-tab="whoop">Whoop</button>
+  <button class="tab-btn" data-tab="nutrition">Nutrition</button>
+  <button class="tab-btn" data-tab="workhours">Work Hours</button>
+  <button class="tab-btn" data-tab="investments">Investments</button>
+  <button class="tab-btn" data-tab="habits">Habits</button>
+</nav>
+
+<!-- ══════════════════════════ WHOOP ══════════════════════════ -->
+<section id="whoop" class="section active">
+  <div id="whoop-banner" class="connect-banner">
+    <span class="banner-icon">⌚</span>
+    <div class="banner-text">
+      <div class="banner-title" id="whoop-banner-title">Connect your Whoop</div>
+      <div class="banner-sub" id="whoop-banner-sub">Sync recovery, sleep, and strain data automatically.</div>
+    </div>
+    <div id="whoop-banner-btn"></div>
+  </div>
+
+  <div id="whoop-content" style="display:none">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+      <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="whoopDisconnect()">Disconnect Whoop</button>
+    </div>
+    <div id="whoop-today-stats" class="five-col" style="margin-bottom:16px"></div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">Strain — Last 5 Days</span></div>
+      <div id="whoop-chart-strain"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Recovery — Last 5 Days</span></div>
+      <div id="whoop-chart-recovery"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Calories Burned — Last 5 Days</span></div>
+      <div id="whoop-chart-calories"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ NUTRITION ══════════════════════════ -->
+<section id="nutrition" class="section">
+  <div class="card">
+    <div class="card-header"><span class="card-title">Daily Goals</span></div>
+    <div class="form-row">
+      <div class="fg"><label>Calories</label><input id="g-cal" type="number" placeholder="2000" oninput="nutrSaveGoals()"></div>
+      <div class="fg"><label>Protein (g)</label><input id="g-protein" type="number" placeholder="150" oninput="nutrSaveGoals()"></div>
+      <div class="fg"><label>Carbs (g)</label><input id="g-carbs" type="number" placeholder="250" oninput="nutrSaveGoals()"></div>
+      <div class="fg"><label>Fat (g)</label><input id="g-fat" type="number" placeholder="65" oninput="nutrSaveGoals()"></div>
+    </div>
+  </div>
+
+  <!-- Daily progress -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header">
+      <span class="card-title">Daily Totals</span>
+      <div class="fg" style="flex:0 0 auto;min-width:160px">
+        <input id="nutr-view-date" type="date" onchange="nutrRender()">
+      </div>
+    </div>
+    <div id="nutr-progress" class="four-col"></div>
+  </div>
+
+  <!-- Manual log -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Manual Entry</span></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="form-row">
+        <div class="fg"><label>Meal</label>
+          <select id="m-meal">
+            <option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option>
+          </select>
+        </div>
+        <div class="fg"><label>Date</label><input id="m-date" type="date"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Calories</label><input id="m-cal" type="number" min="0" placeholder="0"></div>
+        <div class="fg"><label>Protein (g)</label><input id="m-protein" type="number" min="0" step=".1" placeholder="0"></div>
+        <div class="fg"><label>Carbs (g)</label><input id="m-carbs" type="number" min="0" step=".1" placeholder="0"></div>
+        <div class="fg"><label>Fat (g)</label><input id="m-fat" type="number" min="0" step=".1" placeholder="0"></div>
+      </div>
+      <button class="btn btn-blue" onclick="nutrAdd()" style="align-self:flex-start">Log Food</button>
+    </div>
+  </div>
+
+  <!-- Logged meals -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Logged Meals</span></div>
+    <div class="entry-list" id="nutr-meal-list"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ WORK HOURS ══════════════════════════ -->
+<section id="workhours" class="section">
+  <div class="three-col" style="margin-bottom:16px">
+    <div class="stat-tile"><div class="stat-label">Pay Period Hours</div><div class="stat-value orange" id="wh-period-hours">0h</div><div class="stat-sub" id="wh-period-range"></div></div>
+    <div class="stat-tile"><div class="stat-label">Pay Period Earnings</div><div class="stat-value green" id="wh-period-earnings">$0.00</div></div>
+    <div class="stat-tile">
+      <div class="stat-label">Hourly Rate</div>
+      <div class="stat-value teal" id="wh-rate-display">$22.00/hr</div>
+      <div class="stat-sub">
+        <input id="wh-rate-input" type="number" min="0" step="0.25" value="22" style="width:70px;display:inline-block;padding:3px 6px;font-size:11px" onchange="whSetRate()"> per hour
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Log Hours</span></div>
+    <div class="form-row">
+      <div class="fg"><label>Date</label><input id="wh-date" type="date"></div>
+      <div class="fg"><label>Hours</label><input id="wh-hours" type="number" min="0" max="24" step=".25" placeholder="8"></div>
+      <button class="btn btn-orange" onclick="whAdd()">Log</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Hours Log</span>
+      <div style="display:flex;gap:8px">
+        <select id="wh-period-filter" onchange="whRender()" style="width:auto;font-size:12px;padding:5px 8px">
+          <option value="">All time</option>
+        </select>
+      </div>
+    </div>
+    <div class="entry-list" id="wh-list"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ INVESTMENTS ══════════════════════════ -->
+<section id="investments" class="section">
+  <div class="two-col" style="margin-bottom:16px">
+    <div class="stat-tile">
+      <div class="stat-label">Portfolio Value</div><div class="stat-value teal" id="inv-total">$0.00</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-label">Cash Balance</div>
+      <div style="display:flex;align-items:center;gap:4px">
+        <span style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--text)">$</span>
+        <input id="inv-cash" type="number" min="0" step="any" placeholder="0.00" oninput="invSaveCash()" style="font-family:var(--mono);font-size:24px;font-weight:700;border:none;background:transparent;padding:0;color:var(--text)">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Add Holding</span></div>
+    <div class="form-row">
+      <div class="fg"><label>Ticker</label><input id="inv-ticker" placeholder="e.g. AAPL" style="text-transform:uppercase"></div>
+      <div class="fg"><label>Shares Owned</label><input id="inv-shares" type="number" min="0" step="any" placeholder="10"></div>
+      <button class="btn btn-teal" onclick="invAdd()">Add</button>
+    </div>
+  </div>
+
+  <div class="card" style="overflow-x:auto">
+    <div class="card-header">
+      <span class="card-title">Holdings</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="stat-sub" id="inv-price-status"></span>
+        <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="invRefreshPrices()">↻ Refresh Prices</button>
+      </div>
+    </div>
+    <table class="inv-table" id="inv-table">
+      <thead>
+        <tr>
+          <th>Ticker</th><th>Shares</th><th>Current Price</th><th>Market Value</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="inv-body"></tbody>
+    </table>
+    <div id="inv-empty" class="empty">No holdings yet. Add your first position above.</div>
+  </div>
+
+  <!-- Trade log -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Transaction Log</span>
+      <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="invAddTrade()">+ Log Trade</button>
+    </div>
+    <div id="inv-trade-form" style="display:none;margin-bottom:16px">
+      <div class="form-row">
+        <div class="fg"><label>Date</label><input id="t-date" type="date"></div>
+        <div class="fg"><label>Ticker</label><input id="t-ticker" placeholder="AAPL" style="text-transform:uppercase"></div>
+        <div class="fg"><label>Action</label><select id="t-action"><option>Buy</option><option>Sell</option><option>Dividend</option><option>Deposit</option><option>Withdrawal</option></select></div>
+        <div class="fg"><label>Shares</label><input id="t-shares" type="number" step="any" placeholder="10"></div>
+        <div class="fg"><label>Price ($)</label><input id="t-price" type="number" step="0.01" placeholder="150.00"></div>
+        <div class="fg"><label>Notes</label><input id="t-notes" placeholder="Optional"></div>
+        <button class="btn btn-ghost" onclick="invSaveTrade()">Save</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('inv-trade-form').style.display='none'">Cancel</button>
+      </div>
+    </div>
+    <div class="entry-list" id="inv-trade-list"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ HABITS ══════════════════════════ -->
+<section id="habits" class="section">
+  <div class="card" style="overflow-x:auto">
+    <div class="card-header">
+      <span class="card-title">This Week</span>
+      <span class="stat-sub" id="habits-week-range"></span>
+    </div>
+    <table class="inv-table" id="habits-table">
+      <thead><tr id="habits-head"></tr></thead>
+      <tbody id="habits-body"></tbody>
+      <tfoot id="habits-foot"></tfoot>
+    </table>
+  </div>
+</section>
+
+<script>
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+const today = () => new Date().toISOString().slice(0,10);
+const thisMonth = () => today().slice(0,7);
+const fmt$ = (n,sign=false) => {
+  const s = Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  return (sign ? (n>=0?'+':'-') : (n<0?'-':'')) + '$' + s;
+};
+const fmtH = h => h % 1 === 0 ? h + 'h' : h.toFixed(2) + 'h';
+const load  = k => { try { return JSON.parse(localStorage.getItem(k)||'[]'); } catch{ return []; }};
+const loadO = k => { try { return JSON.parse(localStorage.getItem(k)||'{}'); } catch{ return {}; }};
+const save  = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+const esc   = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const uid   = () => Date.now() + Math.random().toString(36).slice(2,5);
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'whoop') whoopInit();
+  });
+});
+
+// ─── WHOOP ────────────────────────────────────────────────────────────────────
+const SPORT = {0:'Running',1:'Cycling',16:'Baseball',17:'Basketball',18:'Rowing',19:'Fencing',20:'Field Hockey',21:'Football',22:'Golf',24:'Ice Hockey',25:'Lacrosse',27:'Martial Arts',28:'Pool Swim',29:'Open Water Swim',30:'Paddling',31:'Rock Climbing',32:'Rugby',33:'Sailing',34:'Skiing',35:'Soccer',36:'Softball',37:'Squash',38:'Tennis',39:'Track & Field',40:'Volleyball',41:'Water Polo',42:'Wrestling',43:'Boxing',44:'Dance',45:'Pilates',46:'Yoga',47:'Weightlifting',48:'Cross Country Skiing',49:'Functional Fitness',50:'Duathlon',51:'Gymnastics',52:'Hiking',53:'Horseback Riding',54:'Kayaking',55:'Martial Arts',56:'Mountain Biking',57:'Powerlifting',58:'Rock Climbing',59:'Rowing',60:'Paddle Tennis',61:'Skiing',62:'Snowboarding',63:'Squash',64:'Stand Up Paddling',65:'Surf',66:'Swimming',67:'Waterpolo',68:'Wheelchair',71:'HIIT',73:'Spin',74:'Triathlon',75:'Walking',76:'Stretching',77:'Cross Training',82:'Activities Classes',83:'Barre',84:'Stage Performance',85:'High Stress Work',86:'Mind & Body',87:'Recovery',88:'Soccer',89:'Meditation',90:'Stair Climber',91:'Cardiovascular',163:'Quarterbacking',164:'Skateboarding',165:'Coaching',166:'Ice Bath',167:'Commuting',168:'Gaming',169:'Snowshoeing',170:'Motocross'};
+
+let whoopLoaded = false;
+
+async function whoopInit() {
+  if (whoopLoaded) return;
+  whoopLoaded = true;
+  try {
+    const s = await fetch('/api/whoop/status').then(r=>r.json());
+    const banner = document.getElementById('whoop-banner');
+    const btnEl  = document.getElementById('whoop-banner-btn');
+    if (s.connected) {
+      banner.style.display = 'none';
+      document.getElementById('whoop-content').style.display = 'block';
+      whoopLoadAll();
+    } else {
+      banner.style.display = 'flex';
+      banner.classList.remove('connected');
+      document.getElementById('whoop-banner-title').textContent = 'Connect your Whoop';
+      document.getElementById('whoop-banner-sub').textContent   = 'Sync recovery, sleep, and strain data automatically.';
+      btnEl.innerHTML = `<a href="/auth/whoop" class="btn btn-red-outline" style="text-decoration:none">Connect Whoop</a>`;
+      document.getElementById('whoop-content').style.display = 'none';
+    }
+  } catch {
+    document.getElementById('whoop-banner-sub').textContent = 'Could not reach server. Is it running?';
+  }
+}
+
+async function whoopDisconnect() {
+  await fetch('/auth/whoop/disconnect', {method:'POST'});
+  whoopLoaded = false;
+  whoopInit();
+}
+
+async function whoopLoadAll() {
+  const [rec, slp, cyc] = await Promise.all([
+    fetch('/api/whoop/recovery').then(r=>r.json()).catch(()=>({records:[]})),
+    fetch('/api/whoop/sleep').then(r=>r.json()).catch(()=>({records:[]})),
+    fetch('/api/whoop/cycles').then(r=>r.json()).catch(()=>({records:[]})),
+  ]);
+  renderWhoopToday(rec.records||[], slp.records||[], cyc.records||[]);
+  renderWhoopCharts(rec.records||[], cyc.records||[]);
+}
+
+function lastNDays(records, n) {
+  return records.slice(0, n).slice().reverse();
+}
+
+function chartLabel(dateStr) {
+  return new Date(dateStr).toLocaleDateString('en-US', {month:'short', day:'numeric'});
+}
+
+function renderLineChart(containerId, points, color, unit) {
+  const container = document.getElementById(containerId);
+  const valid = points.filter(p => p.value !== null && p.value !== undefined && !isNaN(p.value));
+  if (!valid.length) { container.innerHTML = '<div class="empty">No data yet.</div>'; return; }
+
+  const width = 600, height = 160, padX = 36, padY = 24;
+  const values = valid.map(p => p.value);
+  let max = Math.max(...values), min = Math.min(...values);
+  if (max === min) { max += 1; min -= 1; }
+  const range = max - min;
+  const stepX = points.length > 1 ? (width - padX*2) / (points.length - 1) : 0;
+
+  const coords = points.map((p, i) => {
+    const x = padX + i * stepX;
+    const hasVal = p.value !== null && p.value !== undefined && !isNaN(p.value);
+    const y = hasVal ? height - padY - ((p.value - min) / range) * (height - padY*2) : null;
+    return { ...p, x, y, hasVal };
+  });
+
+  const withVals = coords.filter(c => c.hasVal);
+  const path = withVals.map((c, i) => (i === 0 ? 'M' : 'L') + c.x + ' ' + c.y).join(' ');
+  const circles = withVals.map(c => `<circle cx="${c.x}" cy="${c.y}" r="4" fill="${color}"/>`).join('');
+  const valueLabels = withVals.map(c => `<text x="${c.x}" y="${c.y - 10}" font-size="11" fill="${color}" text-anchor="middle" font-weight="700">${c.value}${unit||''}</text>`).join('');
+  const dateLabels = coords.map(c => `<text x="${c.x}" y="${height - 6}" font-size="10" fill="var(--muted)" text-anchor="middle">${c.label}</text>`).join('');
+
+  container.innerHTML = `<svg viewBox="0 0 ${width} ${height}" style="width:100%;height:160px;display:block">
+    <path d="${path}" fill="none" stroke="${color}" stroke-width="2"/>
+    ${circles}${valueLabels}${dateLabels}
+  </svg>`;
+}
+
+function renderWhoopCharts(recRecords, cycleRecords) {
+  const recDays = lastNDays(recRecords, 5).map(r => ({
+    label: chartLabel(r.created_at),
+    value: r.score?.recovery_score ?? null,
+  }));
+  const cycDays = lastNDays(cycleRecords, 5);
+  const strainDays = cycDays.map(c => ({
+    label: chartLabel(c.created_at),
+    value: c.score?.strain != null ? +c.score.strain.toFixed(1) : null,
+  }));
+  const calorieDays = cycDays.map(c => ({
+    label: chartLabel(c.created_at),
+    value: c.score?.kilojoule != null ? Math.round(c.score.kilojoule * 0.239) : null,
+  }));
+
+  renderLineChart('whoop-chart-strain', strainDays, 'var(--orange)', '');
+  renderLineChart('whoop-chart-recovery', recDays, 'var(--green)', '%');
+  renderLineChart('whoop-chart-calories', calorieDays, 'var(--accent)', ' cal');
+}
+
+function recoveryColor(score) {
+  if (score >= 67) return 'var(--green)';
+  if (score >= 34) return 'var(--yellow)';
+  return 'var(--red)';
+}
+
+function renderWhoopToday(recs, sleepRecs, cycleRecs) {
+  const latest      = recs[0];
+  const latestSleep = sleepRecs[0];
+  const latestCycle = cycleRecs[0];
+  const container   = document.getElementById('whoop-today-stats');
+
+  const score     = latest?.score?.recovery_score ?? '--';
+  const hrv       = latest?.score?.hrv_rmssd_milli ? latest.score.hrv_rmssd_milli.toFixed(1) : '--';
+  const sleepPerf = latestSleep?.score?.sleep_performance_percentage?.toFixed(0) ?? '--';
+  const strain    = latestCycle?.score?.strain?.toFixed(1) ?? '--';
+  const calories  = latestCycle?.score?.kilojoule ? Math.round(latestCycle.score.kilojoule * 0.239) : '--';
+
+  const scoreColor = typeof score === 'number' ? recoveryColor(score) : 'var(--muted)';
+
+  container.innerHTML = `
+    <div class="stat-tile"><div class="stat-label">Strain</div><div class="stat-value orange">${strain}</div></div>
+    <div class="stat-tile"><div class="stat-label">Recovery Score</div><div class="stat-value" style="color:${scoreColor}">${score}${typeof score==='number'?'%':''}</div></div>
+    <div class="stat-tile"><div class="stat-label">Sleep Performance</div><div class="stat-value purple">${sleepPerf}${sleepPerf!=='--'?'%':''}</div></div>
+    <div class="stat-tile"><div class="stat-label">HRV</div><div class="stat-value blue">${hrv}${hrv!=='--'?' ms':''}</div></div>
+    <div class="stat-tile"><div class="stat-label">Calories Burned</div><div class="stat-value yellow">${calories}${calories!=='--'?' cal':''}</div></div>`;
+}
+
+// Check for OAuth redirect params
+const qp = new URLSearchParams(location.search);
+if (qp.get('whoop_connected')) {
+  history.replaceState({}, '', '/');
+  document.querySelector('[data-tab="whoop"]').click();
+}
+
+// ─── NUTRITION ────────────────────────────────────────────────────────────────
+document.getElementById('m-date').value = today();
+
+function nutrSaveGoals() {
+  save('nutrGoals', {
+    cal:    +document.getElementById('g-cal').value     || 0,
+    protein:+document.getElementById('g-protein').value || 0,
+    carbs:  +document.getElementById('g-carbs').value   || 0,
+    fat:    +document.getElementById('g-fat').value     || 0,
+  });
+  nutrRender();
+}
+
+function nutrLoadGoals() {
+  const g = loadO('nutrGoals');
+  if (g.cal)     document.getElementById('g-cal').value     = g.cal;
+  if (g.protein) document.getElementById('g-protein').value = g.protein;
+  if (g.carbs)   document.getElementById('g-carbs').value   = g.carbs;
+  if (g.fat)     document.getElementById('g-fat').value     = g.fat;
+}
+
+function nutrAdd() {
+  const name = document.getElementById('m-meal').value;
+  const entry = {
+    id:      uid(),
+    name,
+    date:    document.getElementById('m-date').value,
+    cal:     +document.getElementById('m-cal').value     || 0,
+    protein: +document.getElementById('m-protein').value || 0,
+    carbs:   +document.getElementById('m-carbs').value   || 0,
+    fat:     +document.getElementById('m-fat').value     || 0,
+    sodium:  0,
+    sugar:   0,
+    source:  'manual',
+  };
+  const meals = load('meals');
+  meals.unshift(entry);
+  save('meals', meals);
+  ['m-cal','m-protein','m-carbs','m-fat'].forEach(id => document.getElementById(id).value = '');
+  nutrRender();
+}
+
+function nutrRender() {
+  const goals  = loadO('nutrGoals');
+  const meals  = load('meals');
+  const viewDate = document.getElementById('nutr-view-date').value || today();
+  const todayMeals = meals.filter(m => m.date === viewDate);
+  const tot = todayMeals.reduce((a,m) => ({
+    cal:a.cal+m.cal, protein:a.protein+m.protein, carbs:a.carbs+m.carbs, fat:a.fat+m.fat
+  }), {cal:0,protein:0,carbs:0,fat:0});
+
+  const g = { cal:goals.cal||2000, protein:goals.protein||150, carbs:goals.carbs||250, fat:goals.fat||65 };
+  const progCard = (label,val,goal,color,unit) => {
+    const pct = Math.min(100,(val/goal)*100);
+    const over = val > goal;
+    return `<div class="stat-tile">
+      <div class="stat-label">${label}</div>
+      <div class="stat-value" style="color:var(--${color})">${val.toFixed(0)}<span style="font-size:12px;color:var(--muted);font-weight:400"> / ${goal}${unit}</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${over?'var(--red)':'var(--'+color+')'}"></div></div>
+    </div>`;
+  };
+  document.getElementById('nutr-progress').innerHTML =
+    progCard('Calories', tot.cal,     g.cal,     'orange', ' kcal') +
+    progCard('Protein',  tot.protein, g.protein, 'blue',   'g') +
+    progCard('Carbs',    tot.carbs,   g.carbs,   'orange', 'g') +
+    progCard('Fat',      tot.fat,     g.fat,     'purple', 'g');
+
+  const mealList = document.getElementById('nutr-meal-list');
+  if (!todayMeals.length) {
+    mealList.innerHTML = '<div class="empty">No meals logged for this day.</div>';
+  } else {
+    mealList.innerHTML = todayMeals.map(m => `<div class="entry">
+      <div class="entry-body">
+        <div class="entry-name">${esc(m.name)}</div>
+        <div class="entry-meta">${m.cal} kcal &middot; ${m.protein}g protein &middot; ${m.carbs}g carbs &middot; ${m.fat}g fat</div>
+      </div>
+      <button class="del-btn" onclick="nutrDelete('${m.id}')">✕</button>
+    </div>`).join('');
+  }
+}
+
+function nutrDelete(id) {
+  save('meals', load('meals').filter(m => m.id != id));
+  nutrRender();
+}
+
+// ─── WORK HOURS ───────────────────────────────────────────────────────────────
+document.getElementById('wh-date').value = today();
+
+const PAY_ANCHOR = new Date('2026-06-08T00:00:00Z').getTime();
+const PAY_PERIOD_MS = 14 * 86400000;
+
+function periodIndexForDate(dateStr) {
+  const t = new Date(dateStr + 'T00:00:00Z').getTime();
+  return Math.floor((t - PAY_ANCHOR) / PAY_PERIOD_MS);
+}
+
+function periodRange(index) {
+  const start = new Date(PAY_ANCHOR + index * PAY_PERIOD_MS);
+  const end   = new Date(start.getTime() + (PAY_PERIOD_MS - 86400000));
+  return { start: start.toISOString().slice(0,10), end: end.toISOString().slice(0,10), index };
+}
+
+function fmtRange(r) {
+  const opts = {month:'short', day:'numeric'};
+  const s = new Date(r.start+'T00:00:00').toLocaleDateString('en-US',opts);
+  const e = new Date(r.end+'T00:00:00').toLocaleDateString('en-US',opts);
+  return `${s} – ${e}`;
+}
+
+function whGetRate() {
+  return loadO('workSettings').rate || 22;
+}
+
+function whSetRate() {
+  const rate = parseFloat(document.getElementById('wh-rate-input').value) || 22;
+  save('workSettings', { rate });
+  whRender();
+}
+
+function whAdd() {
+  const date  = document.getElementById('wh-date').value;
+  const hours = parseFloat(document.getElementById('wh-hours').value);
+  if (!hours || hours <= 0) return;
+  const logs = load('workHours');
+  logs.unshift({ id: uid(), date, hours });
+  save('workHours', logs);
+  document.getElementById('wh-hours').value = '';
+  whPopPeriods(); whRender();
+}
+
+function whDelete(id) {
+  save('workHours', load('workHours').filter(l => l.id != id));
+  whPopPeriods(); whRender();
+}
+
+function whPopPeriods() {
+  const sel = document.getElementById('wh-period-filter');
+  const cur = sel.value;
+  const curIdx = periodIndexForDate(today());
+  const indices = new Set(load('workHours').map(l => periodIndexForDate(l.date)));
+  indices.add(curIdx);
+  const sorted = [...indices].sort((a,b)=>b-a);
+  const selected = cur !== '' ? cur : String(curIdx);
+  sel.innerHTML = '<option value="">All time</option>' +
+    sorted.map(i => `<option value="${i}"${String(i)===selected?' selected':''}>${fmtRange(periodRange(i))}</option>`).join('');
+}
+
+function whRender() {
+  const pf   = document.getElementById('wh-period-filter').value;
+  const logs = load('workHours');
+  const rate = whGetRate();
+  document.getElementById('wh-rate-input').value = rate;
+  document.getElementById('wh-rate-display').textContent = '$' + rate.toFixed(2) + '/hr';
+
+  let periodLogs, periodHrs, rangeLabel;
+  if (pf !== '') {
+    const idx  = parseInt(pf);
+    periodLogs = logs.filter(l => periodIndexForDate(l.date) === idx);
+    rangeLabel = fmtRange(periodRange(idx));
+  } else {
+    periodLogs = logs;
+    rangeLabel = 'All time';
+  }
+  periodHrs = periodLogs.reduce((s,l)=>s+l.hours,0);
+  document.getElementById('wh-period-hours').textContent    = fmtH(periodHrs);
+  document.getElementById('wh-period-range').textContent    = rangeLabel;
+  document.getElementById('wh-period-earnings').textContent = fmt$(periodHrs * rate);
+
+  let shown = periodLogs.slice(0,60);
+  const list = document.getElementById('wh-list');
+  if (!shown.length) { list.innerHTML = '<div class="empty">No hours logged yet.</div>'; return; }
+  list.innerHTML = shown.map(l => {
+    const earn = l.hours * rate;
+    return `<div class="entry">
+      <div class="entry-body">
+        <div class="entry-name">${l.date}</div>
+        <div class="entry-meta">$${rate.toFixed(2)}/hr · ${fmt$(earn)}</div>
+      </div>
+      <div class="entry-value orange">${fmtH(l.hours)}</div>
+      <button class="del-btn" onclick="whDelete('${l.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ─── INVESTMENTS ──────────────────────────────────────────────────────────────
+function invAdd() {
+  const ticker = document.getElementById('inv-ticker').value.trim().toUpperCase();
+  const shares = parseFloat(document.getElementById('inv-shares').value);
+  if (!ticker || !shares) return;
+  const holdings = load('holdings');
+  holdings.push({ id: uid(), ticker, shares, curPx: null });
+  save('holdings', holdings);
+  ['inv-ticker','inv-shares'].forEach(id => document.getElementById(id).value = '');
+  invRender();
+  invRefreshPrices();
+}
+
+async function invRefreshPrices() {
+  const holdings = load('holdings');
+  const symbols = [...new Set(holdings.map(h => h.ticker))];
+  const status = document.getElementById('inv-price-status');
+  if (!symbols.length) { status.textContent = ''; return; }
+  status.textContent = 'Updating…';
+  try {
+    const quotes = await fetch('/api/quote?symbols=' + symbols.map(encodeURIComponent).join(',')).then(r=>r.json());
+    let updated = 0;
+    holdings.forEach(h => {
+      if (typeof quotes[h.ticker] === 'number') { h.curPx = quotes[h.ticker]; updated++; }
+    });
+    save('holdings', holdings);
+    invRender();
+    status.textContent = updated
+      ? `Live prices updated ${new Date().toLocaleTimeString()}`
+      : 'Could not fetch live prices';
+  } catch {
+    status.textContent = 'Could not fetch live prices';
+  }
+}
+
+function invDelete(id) {
+  save('holdings', load('holdings').filter(h => h.id != id));
+  invRender();
+}
+
+function invAddTrade() {
+  document.getElementById('t-date').value = today();
+  document.getElementById('inv-trade-form').style.display = 'block';
+}
+
+function invSaveTrade() {
+  const date   = document.getElementById('t-date').value;
+  const ticker = document.getElementById('t-ticker').value.trim().toUpperCase();
+  const action = document.getElementById('t-action').value;
+  const shares = parseFloat(document.getElementById('t-shares').value) || 0;
+  const price  = parseFloat(document.getElementById('t-price').value)  || 0;
+  const notes  = document.getElementById('t-notes').value.trim();
+  if (!ticker || !action) return;
+  const trades = load('trades');
+  trades.unshift({ id: uid(), date, ticker, action, shares, price, notes });
+  save('trades', trades);
+  document.getElementById('inv-trade-form').style.display = 'none';
+  ['t-ticker','t-shares','t-price','t-notes'].forEach(id => document.getElementById(id).value = '');
+  invRender();
+}
+
+function invDeleteTrade(id) {
+  save('trades', load('trades').filter(t => t.id != id));
+  invRender();
+}
+
+function invSaveCash() {
+  save('invCash', document.getElementById('inv-cash').value);
+  invRender();
+}
+
+function invLoadCash() {
+  const c = localStorage.getItem('invCash');
+  if (c) document.getElementById('inv-cash').value = JSON.parse(c);
+}
+
+function invRender() {
+  const holdings = load('holdings');
+  const trades   = load('trades');
+  const cash     = parseFloat(document.getElementById('inv-cash').value) || 0;
+
+  let totalVal=cash;
+  const tbody = document.getElementById('inv-body');
+  const empty = document.getElementById('inv-empty');
+
+  if (!holdings.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    document.getElementById('inv-total').textContent = fmt$(totalVal);
+  } else {
+    empty.style.display = 'none';
+    tbody.innerHTML = holdings.map(h => {
+      const hasPx = typeof h.curPx === 'number';
+      const mktVal = hasPx ? h.shares * h.curPx : 0;
+      if (hasPx) totalVal += mktVal;
+      return `<tr>
+        <td><strong>${esc(h.ticker)}</strong></td>
+        <td>${h.shares.toLocaleString()}</td>
+        <td>${hasPx ? '$' + h.curPx.toFixed(2) : '--'}</td>
+        <td><strong>${hasPx ? fmt$(mktVal) : '--'}</strong></td>
+        <td><button class="del-btn" onclick="invDelete('${h.id}')">✕</button></td>
+      </tr>`;
+    }).join('');
+    document.getElementById('inv-total').textContent = fmt$(totalVal);
+  }
+
+  // Trade log
+  const tlist = document.getElementById('inv-trade-list');
+  if (!trades.length) { tlist.innerHTML = '<div class="empty">No trades logged yet.</div>'; return; }
+  const actionColor = {Buy:'var(--green)',Sell:'var(--red)',Dividend:'var(--teal)',Deposit:'var(--blue)',Withdrawal:'var(--orange)'};
+  tlist.innerHTML = trades.map(t => {
+    const total = t.shares && t.price ? fmt$(t.shares * t.price) : '—';
+    return `<div class="entry">
+      <div class="entry-body">
+        <div class="entry-name"><strong>${esc(t.ticker)}</strong><span class="tag" style="background:var(--surface3);color:${actionColor[t.action]||'var(--muted2)'}">${esc(t.action)}</span></div>
+        <div class="entry-meta">${t.date}${t.shares ? ` · ${t.shares} shares @ $${t.price}` : ''}${t.notes ? ' · ' + esc(t.notes) : ''}</div>
+      </div>
+      <div class="entry-value teal">${total}</div>
+      <button class="del-btn" onclick="invDeleteTrade('${t.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ─── HABITS ───────────────────────────────────────────────────────────────────
+const HABITS = [
+  { key: 'supplements', label: 'Supplements' },
+  { key: 'gym',         label: 'Gym' },
+  { key: 'pushups',     label: 'Daily Push-ups' },
+  { key: 'crunches',    label: 'Daily Crunches' },
+  { key: 'stretches',   label: 'Daily Stretches' },
+  { key: 'water',       label: '6 Bottles of Water' },
+];
+const DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function habitsWeekStart() {
+  const d = new Date();
+  d.setDate(d.getDate() - d.getDay());
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function habitsToggle(weekStart, habitKey, dayIdx) {
+  const all = loadO('habits');
+  const week = all[weekStart] || {};
+  const days = week[habitKey] || [false,false,false,false,false,false,false];
+  days[dayIdx] = !days[dayIdx];
+  week[habitKey] = days;
+  all[weekStart] = week;
+  save('habits', all);
+  habitsRender();
+}
+
+function habitsRender() {
+  const weekStart = habitsWeekStart();
+  const all  = loadO('habits');
+  const week = all[weekStart] || {};
+
+  const start = new Date(weekStart + 'T00:00:00');
+  const end   = new Date(start.getTime() + 6*86400000);
+  const opts  = {month:'short', day:'numeric'};
+  document.getElementById('habits-week-range').textContent =
+    `${start.toLocaleDateString('en-US',opts)} – ${end.toLocaleDateString('en-US',opts)}`;
+
+  document.getElementById('habits-head').innerHTML =
+    '<th>Habit</th>' + DAY_LABELS.map((d,i) => {
+      const date = new Date(start.getTime() + i*86400000);
+      return `<th style="text-align:center">${d}<br><span style="color:var(--muted);font-weight:400">${date.getDate()}</span></th>`;
+    }).join('');
+
+  document.getElementById('habits-body').innerHTML = HABITS.map(h => {
+    const days = week[h.key] || [false,false,false,false,false,false,false];
+    const cells = days.map((checked,i) => {
+      const disabled = h.key === 'gym' && (i === 5 || i === 6);
+      if (disabled) {
+        return `<td style="text-align:center"><input type="checkbox" style="width:18px;height:18px;opacity:.35" disabled></td>`;
+      }
+      return `<td style="text-align:center"><input type="checkbox" style="width:18px;height:18px;cursor:pointer" ${checked?'checked':''} onchange="habitsToggle('${weekStart}','${h.key}',${i})"></td>`;
+    }).join('');
+    return `<tr><td><strong>${esc(h.label)}</strong></td>${cells}</tr>`;
+  }).join('');
+
+  const pctCells = DAY_LABELS.map((_,i) => {
+    let checked = 0, total = 0;
+    HABITS.forEach(h => {
+      if (h.key === 'gym' && (i === 5 || i === 6)) return;
+      total++;
+      const days = week[h.key] || [false,false,false,false,false,false,false];
+      if (days[i]) checked++;
+    });
+    const pct = total ? Math.round((checked/total)*100) : 0;
+    return `<td style="text-align:center;font-weight:700;color:var(--purple)">${pct}%</td>`;
+  }).join('');
+  document.getElementById('habits-foot').innerHTML = `<tr><td><strong>Completion</strong></td>${pctCells}</tr>`;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+document.getElementById('nutr-view-date').value = today();
+nutrLoadGoals();
+nutrRender();
+invLoadCash();
+whPopPeriods(); whRender();
+invRender();
+invRefreshPrices();
+setInterval(invRefreshPrices, 60000);
+habitsRender();
+whoopInit();
+
+// Set default date fields
+document.getElementById('wh-date').value = today();
+document.getElementById('t-date').value  = today();
+document.getElementById('m-date').value  = today();
+</script>
+</body>
+</html>
