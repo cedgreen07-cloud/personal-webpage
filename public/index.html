@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Personal Tracker</title>
 <style>
 :root {
@@ -30,7 +30,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:0}
 
 /* NAV */
-nav{display:flex;align-items:center;gap:4px;padding:16px 24px;border-bottom:1px solid var(--border);background:rgba(0,0,0,.6);backdrop-filter:blur(12px);position:sticky;top:0;z-index:200;flex-wrap:wrap}
+nav{display:flex;align-items:center;gap:4px;padding:16px 24px;padding-top:calc(16px + env(safe-area-inset-top));border-bottom:1px solid var(--border);background:rgba(0,0,0,.6);backdrop-filter:blur(12px);position:sticky;top:0;z-index:200;flex-wrap:wrap}
 .logo{font-size:14px;font-weight:700;margin-right:auto;letter-spacing:.28em;text-transform:uppercase;color:var(--muted2);font-family:var(--mono)}
 .tab-btn{padding:8px 18px;border-radius:0;border:1px solid transparent;border-bottom:2px solid transparent;cursor:pointer;font-size:11px;font-weight:600;background:transparent;color:var(--muted);transition:all .18s;letter-spacing:.18em;text-transform:uppercase}
 .tab-btn:hover{color:var(--muted2)}
@@ -47,6 +47,40 @@ nav{display:flex;align-items:center;gap:4px;padding:16px 24px;border-bottom:1px 
 .four-col{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .five-col{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
 @media(max-width:680px){.two-col,.three-col,.four-col,.five-col{grid-template-columns:1fr}}
+
+/* ── MOBILE (iPhone-width) ─────────────────────────────────────────────────── */
+@media(max-width:480px){
+  body{font-size:14px}
+  nav{padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top));gap:0;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  .logo{display:none}
+  .tab-btn{padding:8px 12px;font-size:10px;letter-spacing:.08em;flex-shrink:0;white-space:nowrap}
+
+  .section{padding:14px}
+  .card{padding:14px;margin-bottom:12px}
+  .card-header{flex-wrap:wrap;gap:8px;margin-bottom:12px}
+
+  .two-col,.three-col,.four-col,.five-col{grid-template-columns:repeat(2,1fr);gap:8px}
+
+  .stat-tile{padding:12px}
+  .stat-value{font-size:19px}
+  .stat-label{font-size:9px;letter-spacing:.08em}
+
+  .form-row{gap:8px}
+  .fg{flex:1 1 130px;min-width:0}
+  .btn{font-size:10px;padding:8px 12px;letter-spacing:.06em}
+
+  .week-row{gap:4px}
+  .day-cell{padding:6px 2px;font-size:9px}
+  .day-cell .day-hrs{font-size:13px}
+
+  .inv-table{font-size:11px}
+  .inv-table th,.inv-table td{padding:6px 4px}
+
+  .connect-banner{padding:14px 16px;flex-wrap:wrap}
+
+  .ring-score{font-size:34px}
+}
 
 /* CARDS */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;position:relative}
