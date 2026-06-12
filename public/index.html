@@ -69,6 +69,7 @@ nav{display:flex;align-items:center;gap:4px;padding:16px 24px;padding-top:calc(1
   .form-row{gap:8px}
   .fg{flex:1 1 130px;min-width:0}
   .btn{font-size:10px;padding:8px 12px;letter-spacing:.06em}
+  .date-input{max-width:118px;font-size:11px;padding:6px 6px}
 
   .week-row{gap:4px}
   .day-cell{padding:6px 2px;font-size:9px}
@@ -100,6 +101,7 @@ nav{display:flex;align-items:center;gap:4px;padding:16px 24px;padding-top:calc(1
 .fg{display:flex;flex-direction:column;gap:5px;flex:1;min-width:110px}
 .fg label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.1em}
 input,select{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--r);padding:8px 11px;font-size:13px;outline:none;width:100%;transition:border-color .15s}
+.date-input{max-width:140px;font-size:12px;padding:6px 8px}
 input:focus,select:focus{border-color:var(--accent)}
 select option{background:var(--surface2)}
 .btn{padding:9px 16px;border-radius:var(--r);border:1px solid transparent;cursor:pointer;font-size:11px;font-weight:700;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.12em}
@@ -208,7 +210,7 @@ select option{background:var(--surface2)}
     <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
       <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="whoopDisconnect()">Disconnect Whoop</button>
     </div>
-    <div id="whoop-today-stats" class="five-col" style="margin-bottom:16px"></div>
+    <div id="whoop-today-stats" class="four-col" style="margin-bottom:16px"></div>
 
     <div class="card">
       <div class="card-header"><span class="card-title">Strain — Last 5 Days</span></div>
@@ -242,7 +244,7 @@ select option{background:var(--surface2)}
     <div class="card-header">
       <span class="card-title">Daily Totals</span>
       <div class="fg" style="flex:0 0 auto;min-width:160px">
-        <input id="nutr-view-date" type="date" onchange="nutrRender()">
+        <input id="nutr-view-date" class="date-input" type="date" onchange="nutrRender()">
       </div>
     </div>
     <div id="nutr-progress" class="four-col"></div>
@@ -258,7 +260,7 @@ select option{background:var(--surface2)}
             <option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option>
           </select>
         </div>
-        <div class="fg"><label>Date</label><input id="m-date" type="date"></div>
+        <div class="fg"><label>Date</label><input id="m-date" class="date-input" type="date"></div>
       </div>
       <div class="form-row">
         <div class="fg"><label>Calories</label><input id="m-cal" type="number" min="0" placeholder="0"></div>
@@ -294,7 +296,7 @@ select option{background:var(--surface2)}
   <div class="card">
     <div class="card-header"><span class="card-title">Log Hours</span></div>
     <div class="form-row">
-      <div class="fg"><label>Date</label><input id="wh-date" type="date"></div>
+      <div class="fg"><label>Date</label><input id="wh-date" class="date-input" type="date"></div>
       <div class="fg"><label>Hours</label><input id="wh-hours" type="number" min="0" max="24" step=".25" placeholder="8"></div>
       <button class="btn btn-orange" onclick="whAdd()">Log</button>
     </div>
@@ -394,7 +396,11 @@ select option{background:var(--surface2)}
 
 <script>
 // ─── UTILS ────────────────────────────────────────────────────────────────────
-const today = () => new Date().toISOString().slice(0,10);
+const today = () => {
+  const d = new Date();
+  const tzOffset = d.getTimezoneOffset() * 60000;
+  return new Date(d - tzOffset).toISOString().slice(0,10);
+};
 const thisMonth = () => today().slice(0,7);
 const fmt$ = (n,sign=false) => {
   const s = Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -535,7 +541,6 @@ function renderWhoopToday(recs, sleepRecs, cycleRecs) {
   const container   = document.getElementById('whoop-today-stats');
 
   const score     = latest?.score?.recovery_score ?? '--';
-  const hrv       = latest?.score?.hrv_rmssd_milli ? latest.score.hrv_rmssd_milli.toFixed(1) : '--';
   const sleepPerf = latestSleep?.score?.sleep_performance_percentage?.toFixed(0) ?? '--';
   const strain    = latestCycle?.score?.strain?.toFixed(1) ?? '--';
   const calories  = latestCycle?.score?.kilojoule ? Math.round(latestCycle.score.kilojoule * 0.239) : '--';
@@ -546,7 +551,6 @@ function renderWhoopToday(recs, sleepRecs, cycleRecs) {
     <div class="stat-tile"><div class="stat-label">Strain</div><div class="stat-value orange">${strain}</div></div>
     <div class="stat-tile"><div class="stat-label">Recovery Score</div><div class="stat-value" style="color:${scoreColor}">${score}${typeof score==='number'?'%':''}</div></div>
     <div class="stat-tile"><div class="stat-label">Sleep Performance</div><div class="stat-value purple">${sleepPerf}${sleepPerf!=='--'?'%':''}</div></div>
-    <div class="stat-tile"><div class="stat-label">HRV</div><div class="stat-value blue">${hrv}${hrv!=='--'?' ms':''}</div></div>
     <div class="stat-tile"><div class="stat-label">Calories Burned</div><div class="stat-value yellow">${calories}${calories!=='--'?' cal':''}</div></div>`;
 }
 
@@ -904,15 +908,20 @@ function habitsRender() {
   document.getElementById('habits-week-range').textContent =
     `${start.toLocaleDateString('en-US',opts)} – ${end.toLocaleDateString('en-US',opts)}`;
 
+  const todayIdx = new Date().getDay();
+  const dayIndices = [];
+  for (let i = Math.max(0, todayIdx - 3); i <= todayIdx; i++) dayIndices.push(i);
+
   document.getElementById('habits-head').innerHTML =
-    '<th>Habit</th>' + DAY_LABELS.map((d,i) => {
+    '<th>Habit</th>' + dayIndices.map(i => {
       const date = new Date(start.getTime() + i*86400000);
-      return `<th style="text-align:center">${d}<br><span style="color:var(--muted);font-weight:400">${date.getDate()}</span></th>`;
+      return `<th style="text-align:center">${DAY_LABELS[i]}<br><span style="color:var(--muted);font-weight:400">${date.getDate()}</span></th>`;
     }).join('');
 
   document.getElementById('habits-body').innerHTML = HABITS.map(h => {
     const days = week[h.key] || [false,false,false,false,false,false,false];
-    const cells = days.map((checked,i) => {
+    const cells = dayIndices.map(i => {
+      const checked = days[i];
       const disabled = h.key === 'gym' && (i === 5 || i === 6);
       if (disabled) {
         return `<td style="text-align:center"><input type="checkbox" style="width:18px;height:18px;opacity:.35" disabled></td>`;
@@ -922,7 +931,7 @@ function habitsRender() {
     return `<tr><td><strong>${esc(h.label)}</strong></td>${cells}</tr>`;
   }).join('');
 
-  const pctCells = DAY_LABELS.map((_,i) => {
+  const pctCells = dayIndices.map(i => {
     let checked = 0, total = 0;
     HABITS.forEach(h => {
       if (h.key === 'gym' && (i === 5 || i === 6)) return;
