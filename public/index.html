@@ -677,7 +677,8 @@ async function fatsecretDisconnect() {
 }
 
 async function fatsecretFetchDiary(date) {
-  if (fatsecretDiaryCache[date]) return fatsecretDiaryCache[date];
+  // Never cache today's diary so newly-logged FatSecret entries show up immediately.
+  if (date !== today() && fatsecretDiaryCache[date]) return fatsecretDiaryCache[date];
   try {
     const data = await fetch(`/api/fatsecret/diary?date=${date}`).then(r=>r.json());
     const entries = (data.entries || []).map(e => ({
@@ -708,7 +709,7 @@ async function nutrRender() {
     cal:a.cal+m.cal, protein:a.protein+m.protein, carbs:a.carbs+m.carbs, fat:a.fat+m.fat
   }), {cal:0,protein:0,carbs:0,fat:0});
 
-  const g = { cal:goals.cal||2000, protein:goals.protein||150, carbs:goals.carbs||250, fat:goals.fat||65 };
+  const g = { cal:goals.cal||3800, protein:goals.protein||250, carbs:goals.carbs||480, fat:goals.fat||105 };
   const progCard = (label,val,goal,color,unit) => {
     const pct = Math.min(100,(val/goal)*100);
     const over = val > goal;
