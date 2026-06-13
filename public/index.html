@@ -250,6 +250,14 @@ select option{background:var(--surface2)}
 
 <!-- ══════════════════════════ NUTRITION ══════════════════════════ -->
 <section id="nutrition" class="section">
+  <div id="fatsecret-banner" class="connect-banner">
+    <div class="banner-text">
+      <div class="banner-title" id="fatsecret-banner-title">Connect FatSecret</div>
+      <div class="banner-sub" id="fatsecret-banner-sub">Sync your food diary entries logged in the FatSecret app automatically.</div>
+    </div>
+    <div id="fatsecret-banner-btn"></div>
+  </div>
+
   <div class="card">
     <div class="card-header"><span class="card-title">Daily Goals</span></div>
     <div class="form-row">
@@ -452,6 +460,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.add('active');
     document.getElementById(btn.dataset.tab).classList.add('active');
     if (btn.dataset.tab === 'whoop') whoopInit();
+    if (btn.dataset.tab === 'nutrition') fatsecretInit();
   });
 });
 
@@ -600,6 +609,10 @@ if (qp.get('whoop_connected')) {
   history.replaceState({}, '', '/');
   document.querySelector('[data-tab="whoop"]').click();
 }
+if (qp.get('fatsecret_connected')) {
+  history.replaceState({}, '', '/');
+  document.querySelector('[data-tab="nutrition"]').click();
+}
 
 // ─── NUTRITION ────────────────────────────────────────────────────────────────
 document.getElementById('m-date').value = today();
@@ -620,6 +633,59 @@ function nutrLoadGoals() {
   if (g.protein) document.getElementById('g-protein').value = g.protein;
   if (g.carbs)   document.getElementById('g-carbs').value   = g.carbs;
   if (g.fat)     document.getElementById('g-fat').value     = g.fat;
+}
+
+// ─── FatSecret diary sync (3-legged OAuth) ────────────────────────────────────
+let fatsecretConnected = false;
+const fatsecretDiaryCache = {};
+
+async function fatsecretInit() {
+  try {
+    const s = await fetch('/api/fatsecret/status').then(r=>r.json());
+    const banner = document.getElementById('fatsecret-banner');
+    const btnEl  = document.getElementById('fatsecret-banner-btn');
+    fatsecretConnected = !!s.connected;
+    if (fatsecretConnected) {
+      banner.classList.add('connected');
+      document.getElementById('fatsecret-banner-title').textContent = 'FatSecret Connected';
+      document.getElementById('fatsecret-banner-sub').textContent   = 'Food diary entries logged in the FatSecret app will sync automatically.';
+      btnEl.innerHTML = `<button class="btn btn-ghost" onclick="fatsecretDisconnect()">Disconnect</button>`;
+    } else {
+      banner.classList.remove('connected');
+      document.getElementById('fatsecret-banner-title').textContent = 'Connect FatSecret';
+      document.getElementById('fatsecret-banner-sub').textContent   = 'Sync your food diary entries logged in the FatSecret app automatically.';
+      btnEl.innerHTML = `<a href="/auth/fatsecret" class="btn btn-red-outline" style="text-decoration:none">Connect FatSecret</a>`;
+    }
+  } catch {
+    document.getElementById('fatsecret-banner-sub').textContent = 'Could not reach server. Is it running?';
+  }
+  nutrRender();
+}
+
+async function fatsecretDisconnect() {
+  await fetch('/auth/fatsecret/disconnect', {method:'POST'});
+  for (const k of Object.keys(fatsecretDiaryCache)) delete fatsecretDiaryCache[k];
+  fatsecretInit();
+}
+
+async function fatsecretFetchDiary(date) {
+  if (fatsecretDiaryCache[date]) return fatsecretDiaryCache[date];
+  try {
+    const data = await fetch(`/api/fatsecret/diary?date=${date}`).then(r=>r.json());
+    const entries = (data.entries || []).map(e => ({
+      id:      'fs-' + e.food_entry_id,
+      name:    e.food_entry_name || e.food_name || 'Food',
+      cal:     +e.calories || 0,
+      protein: +e.protein  || 0,
+      carbs:   +e.carbohydrate || 0,
+      fat:     +e.fat || 0,
+      source:  'fatsecret',
+    }));
+    fatsecretDiaryCache[date] = entries;
+    return entries;
+  } catch {
+    return [];
+  }
 }
 
 let fatsecretSearchTimer;
@@ -690,11 +756,14 @@ function nutrAdd() {
   nutrRender();
 }
 
-function nutrRender() {
+async function nutrRender() {
   const goals  = loadO('nutrGoals');
   const meals  = load('meals');
   const viewDate = document.getElementById('nutr-view-date').value || today();
-  const todayMeals = meals.filter(m => m.date === viewDate);
+  let todayMeals = meals.filter(m => m.date === viewDate);
+  if (fatsecretConnected) {
+    todayMeals = todayMeals.concat(await fatsecretFetchDiary(viewDate));
+  }
   const tot = todayMeals.reduce((a,m) => ({
     cal:a.cal+m.cal, protein:a.protein+m.protein, carbs:a.carbs+m.carbs, fat:a.fat+m.fat
   }), {cal:0,protein:0,carbs:0,fat:0});
@@ -721,10 +790,10 @@ function nutrRender() {
   } else {
     mealList.innerHTML = todayMeals.map(m => `<div class="entry">
       <div class="entry-body">
-        <div class="entry-name">${esc(m.name)}</div>
+        <div class="entry-name">${esc(m.name)}${m.source==='fatsecret' ? ' <span style="color:var(--muted2);font-size:10px;text-transform:uppercase;letter-spacing:.08em">· FatSecret</span>' : ''}</div>
         <div class="entry-meta">${m.cal} kcal &middot; ${m.protein}g protein &middot; ${m.carbs}g carbs &middot; ${m.fat}g fat</div>
       </div>
-      <button class="del-btn" onclick="nutrDelete('${m.id}')">✕</button>
+      ${m.source==='fatsecret' ? '' : `<button class="del-btn" onclick="nutrDelete('${m.id}')">✕</button>`}
     </div>`).join('');
   }
 }
@@ -1035,7 +1104,7 @@ function habitsRender() {
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 document.getElementById('nutr-view-date').value = today();
 nutrLoadGoals();
-nutrRender();
+fatsecretInit();
 invLoadCash();
 whPopPeriods(); whRender();
 invRender();

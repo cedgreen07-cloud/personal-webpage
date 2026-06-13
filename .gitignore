@@ -2,4 +2,5 @@ node_modules/
 .env
 tokens.json
 whoop_tokens.json
+fatsecret_tokens.json
 .claude/

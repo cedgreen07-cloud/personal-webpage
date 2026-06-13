@@ -5,6 +5,7 @@ const fs      = require('fs');
 const path    = require('path');
 const crypto  = require('crypto');
 const { Redis } = require('@upstash/redis');
+const OAuth = require('oauth-1.0a');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -19,6 +20,34 @@ const SCOPES      = 'read:recovery read:sleep read:workout read:profile read:cyc
 
 const FATSECRET_TOKEN_URL = 'https://oauth.fatsecret.com/connect/token';
 const FATSECRET_API_URL   = 'https://platform.fatsecret.com/rest/server.api';
+
+// ─── FatSecret 3-legged OAuth 1.0a (food diary access) ─────────────────────────
+const FATSECRET_REQUEST_TOKEN_URL = 'https://authentication.fatsecret.com/oauth/request_token';
+const FATSECRET_AUTHORIZE_URL     = 'https://authentication.fatsecret.com/oauth/authorize';
+const FATSECRET_ACCESS_TOKEN_URL  = 'https://authentication.fatsecret.com/oauth/access_token';
+const FATSECRET_CALLBACK          = `${process.env.BASE_URL || `http://localhost:${PORT}`}/auth/fatsecret/callback`;
+const FATSECRET_TOKEN_KEY         = 'fatsecret_tokens';
+
+const fatsecretOAuth = OAuth({
+  consumer: { key: process.env.FATSECRET_CONSUMER_KEY, secret: process.env.FATSECRET_CONSUMER_SECRET },
+  signature_method: 'HMAC-SHA1',
+  hash_function(base_string, key) {
+    return require('crypto').createHmac('sha1', key).update(base_string).digest('base64');
+  },
+});
+
+// Holds request-token secrets between /auth/fatsecret and /auth/fatsecret/callback
+const fatsecretRequestSecrets = new Map();
+
+// FatSecret reads OAuth 1.0a params from the query string, not the Authorization header.
+function signedFatsecretUrl(method, url, data, token) {
+  const requestData = { url, method, data };
+  const allParams = fatsecretOAuth.authorize(requestData, token);
+  const qs = Object.keys(allParams)
+    .map(k => fatsecretOAuth.percentEncode(k) + '=' + fatsecretOAuth.percentEncode(String(allParams[k])))
+    .join('&');
+  return `${url}?${qs}`;
+}
 
 const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
   ? new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN })
@@ -208,6 +237,79 @@ app.get('/api/fatsecret/search', async (req, res) => {
   }
 });
 
+// ─── FatSecret 3-legged OAuth: connect/disconnect ────────────────────────────
+app.get('/auth/fatsecret', async (req, res) => {
+  if (!process.env.FATSECRET_CLIENT_ID) {
+    return res.status(500).send('FATSECRET_CLIENT_ID not set in .env');
+  }
+  try {
+    const data = { oauth_callback: FATSECRET_CALLBACK };
+    const url = signedFatsecretUrl('GET', FATSECRET_REQUEST_TOKEN_URL, data);
+    const r = await axios.get(url);
+    const parsed = new URLSearchParams(r.data);
+    const oauth_token = parsed.get('oauth_token');
+    const oauth_token_secret = parsed.get('oauth_token_secret');
+    fatsecretRequestSecrets.set(oauth_token, oauth_token_secret);
+    res.redirect(`${FATSECRET_AUTHORIZE_URL}?oauth_token=${oauth_token}`);
+  } catch (e) {
+    console.error('FatSecret request token failed:', e.response?.data || e.message);
+    res.redirect('/?fatsecret_error=request_token_failed');
+  }
+});
+
+app.get('/auth/fatsecret/callback', async (req, res) => {
+  const { oauth_token, oauth_verifier } = req.query;
+  if (!oauth_token || !oauth_verifier) return res.redirect('/?fatsecret_error=no_verifier');
+  const requestTokenSecret = fatsecretRequestSecrets.get(oauth_token);
+  fatsecretRequestSecrets.delete(oauth_token);
+  try {
+    const data = { oauth_token, oauth_verifier };
+    const token = { key: oauth_token, secret: requestTokenSecret };
+    const url = signedFatsecretUrl('GET', FATSECRET_ACCESS_TOKEN_URL, data, token);
+    const r = await axios.get(url);
+    const parsed = new URLSearchParams(r.data);
+    await saveTokens(FATSECRET_TOKEN_KEY, {
+      oauth_token: parsed.get('oauth_token'),
+      oauth_token_secret: parsed.get('oauth_token_secret'),
+    });
+    res.redirect('/?fatsecret_connected=1');
+  } catch (e) {
+    console.error('FatSecret access token exchange failed:', e.response?.data || e.message);
+    res.redirect('/?fatsecret_error=exchange_failed');
+  }
+});
+
+app.post('/auth/fatsecret/disconnect', async (req, res) => {
+  await clearTokens(FATSECRET_TOKEN_KEY);
+  res.json({ ok: true });
+});
+
+app.get('/api/fatsecret/status', async (req, res) => {
+  const t = await loadTokens(FATSECRET_TOKEN_KEY);
+  res.json({ connected: !!(t && t.oauth_token && t.oauth_token_secret) });
+});
+
+// ─── FatSecret food diary (3-legged OAuth) ───────────────────────────────────
+app.get('/api/fatsecret/diary', async (req, res) => {
+  const t = await loadTokens(FATSECRET_TOKEN_KEY);
+  if (!t || !t.oauth_token || !t.oauth_token_secret) {
+    return res.status(401).json({ error: 'Not connected' });
+  }
+  const dateStr = req.query.date || new Date().toISOString().slice(0, 10);
+  const days = Math.floor(Date.parse(`${dateStr}T00:00:00Z`) / 86400000);
+  try {
+    const data = { method: 'food_entries.get.v2', format: 'json', date: days };
+    const token = { key: t.oauth_token, secret: t.oauth_token_secret };
+    const url = signedFatsecretUrl('GET', FATSECRET_API_URL, data, token);
+    const r = await axios.get(url);
+    const entries = r.data?.food_entries?.food_entry || [];
+    res.json({ entries: Array.isArray(entries) ? entries : [entries] });
+  } catch (e) {
+    console.error('FatSecret diary fetch failed:', e.response?.data || e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/api/fatsecret/food/:id', async (req, res) => {
   try {
     const token = await getFatsecretToken();
@@ -248,5 +350,6 @@ app.listen(PORT, () => {
   console.log(`   2. Add your Whoop Client ID + Secret from https://developer.whoop.com`);
   console.log(`   3. Set Redirect URI to: ${REDIRECT}\n`);
   console.log(`   FatSecret setup:`);
-  console.log(`   1. Add your FatSecret Client ID + Secret from https://platform.fatsecret.com\n`);
+  console.log(`   1. Add your FatSecret Client ID + Secret from https://platform.fatsecret.com`);
+  console.log(`   2. Set the FatSecret OAuth callback to: ${FATSECRET_CALLBACK}\n`);
 });
