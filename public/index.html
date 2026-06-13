@@ -488,7 +488,7 @@ function chartLabel(dateStr) {
   return new Date(dateStr).toLocaleDateString('en-US', {month:'short', day:'numeric'});
 }
 
-function renderLineChart(containerId, points, color, unit) {
+function renderLineChart(containerId, points, color, unit, minimal) {
   const container = document.getElementById(containerId);
   const valid = points.filter(p => p.value !== null && p.value !== undefined && !isNaN(p.value));
   if (!valid.length) { container.innerHTML = '<div class="empty">No data yet.</div>'; return; }
@@ -510,9 +510,9 @@ function renderLineChart(containerId, points, color, unit) {
   const withVals = coords.filter(c => c.hasVal);
   const path = withVals.map((c, i) => (i === 0 ? 'M' : 'L') + c.x + ' ' + c.y).join(' ');
   const areaPath = `${path} L${withVals[withVals.length-1].x} ${height - padY} L${withVals[0].x} ${height - padY} Z`;
-  const circles = withVals.map(c => `<circle cx="${c.x}" cy="${c.y}" r="4" fill="${color}"/>`).join('');
-  const valueLabels = withVals.map(c => `<text x="${c.x}" y="${c.y - 10}" font-size="11" fill="${color}" text-anchor="middle" font-weight="700">${c.value}${unit||''}</text>`).join('');
-  const dateLabels = coords.map(c => `<text x="${c.x}" y="${height - 6}" font-size="10" fill="var(--muted)" text-anchor="middle">${c.label}</text>`).join('');
+  const circles = minimal ? '' : withVals.map(c => `<circle cx="${c.x}" cy="${c.y}" r="4" fill="${color}"/>`).join('');
+  const valueLabels = minimal ? '' : withVals.map(c => `<text x="${c.x}" y="${c.y - 10}" font-size="11" fill="${color}" text-anchor="middle" font-weight="700">${c.value}${unit||''}</text>`).join('');
+  const dateLabels = minimal ? '' : coords.map(c => `<text x="${c.x}" y="${height - 6}" font-size="10" fill="var(--muted)" text-anchor="middle">${c.label}</text>`).join('');
   const gradId = `grad-${containerId}`;
 
   container.innerHTML = `<svg viewBox="0 0 ${width} ${height}" style="width:100%;height:160px;display:block">
@@ -904,7 +904,7 @@ function invRender() {
       value: balHist[dateStr] != null ? Math.round(balHist[dateStr]) : null,
     });
   }
-  renderLineChart('inv-balance-chart', points, 'var(--accent)', '');
+  renderLineChart('inv-balance-chart', points, 'var(--accent)', '', true);
 }
 
 // ─── HABITS ───────────────────────────────────────────────────────────────────
