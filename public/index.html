@@ -399,6 +399,8 @@ select option{background:var(--surface2)}
 
 <!-- ══════════════════════════ HABITS ══════════════════════════ -->
 <section id="habits" class="section">
+  <div class="three-col" id="habits-summary" style="margin-bottom:16px"></div>
+
   <div class="card" style="overflow-x:auto">
     <div class="card-header">
       <span class="card-title">This Week</span>
@@ -409,6 +411,11 @@ select option{background:var(--surface2)}
       <tbody id="habits-body"></tbody>
       <tfoot id="habits-foot"></tfoot>
     </table>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="card-header"><span class="card-title">Completion — Last 4 Days</span></div>
+    <div id="habits-chart"></div>
   </div>
 </section>
 
@@ -667,7 +674,7 @@ async function nutrRender() {
     return `<div class="stat-tile">
       <div class="stat-label">${label}</div>
       <div class="stat-value" style="color:var(--${color})">${val.toFixed(0)}<span style="font-size:12px;color:var(--muted);font-weight:400"> / ${goal}${unit}</span></div>
-      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${over?'var(--red)':'var(--'+color+')'}"></div></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${over?'var(--red)':'var(--accent)'}"></div></div>
     </div>`;
   };
   document.getElementById('nutr-progress').innerHTML =
@@ -1003,7 +1010,7 @@ function habitsRender() {
     return `<tr><td><strong>${esc(h.label)}</strong></td>${cells}</tr>`;
   }).join('');
 
-  const pctCells = dayIndices.map(i => {
+  const dayPct = i => {
     let checked = 0, total = 0;
     HABITS.forEach(h => {
       if (h.key === 'gym' && (i === 5 || i === 6)) return;
@@ -1011,10 +1018,35 @@ function habitsRender() {
       const days = week[h.key] || [false,false,false,false,false,false,false];
       if (days[i]) checked++;
     });
-    const pct = total ? Math.round((checked/total)*100) : 0;
-    return `<td style="text-align:center;font-weight:700;color:var(--purple)">${pct}%</td>`;
-  }).join('');
+    return total ? Math.round((checked/total)*100) : 0;
+  };
+
+  const pctCells = dayIndices.map(i =>
+    `<td style="text-align:center;font-weight:700;color:var(--purple)">${dayPct(i)}%</td>`
+  ).join('');
   document.getElementById('habits-foot').innerHTML = `<tr><td><strong>Completion</strong></td>${pctCells}</tr>`;
+
+  // Summary boxes
+  const todayPct = dayPct(todayIdx);
+  const weekPcts = [];
+  for (let i = 0; i <= todayIdx; i++) weekPcts.push(dayPct(i));
+  const weekAvg = Math.round(weekPcts.reduce((a,b)=>a+b,0) / weekPcts.length);
+  const weekHigh = Math.max(...weekPcts);
+
+  document.getElementById('habits-summary').innerHTML = `
+    <div class="stat-tile"><div class="stat-label">Today's Completion</div><div class="stat-value yellow">${todayPct}%</div></div>
+    <div class="stat-tile"><div class="stat-label">This Week's Average Completion</div><div class="stat-value yellow">${weekAvg}%</div></div>
+    <div class="stat-tile"><div class="stat-label">This Week's High</div><div class="stat-value yellow">${weekHigh}%</div></div>`;
+
+  // Last 4 days completion chart
+  const chartPoints = dayIndices.map(i => {
+    const date = new Date(start.getTime() + i*86400000);
+    return {
+      label: date.toLocaleDateString('en-US', {month:'short', day:'numeric'}),
+      value: dayPct(i),
+    };
+  });
+  renderLineChart('habits-chart', chartPoints, 'var(--accent)', '%');
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
