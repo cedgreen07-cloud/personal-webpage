@@ -74,6 +74,7 @@ nav{display:flex;align-items:center;gap:4px;padding:16px 24px;padding-top:calc(1
 
   .form-row{gap:8px}
   .fg{flex:1 1 130px;min-width:0}
+  .fg-hours{flex:1 1 90px}
   .btn{font-size:10px;padding:8px 12px;letter-spacing:.06em}
   .date-input{max-width:118px;font-size:11px;padding:6px 6px}
 
@@ -339,7 +340,7 @@ select option{background:var(--surface2)}
     <div class="card-header"><span class="card-title">Log Hours</span></div>
     <div class="form-row">
       <div class="fg"><label>Date</label><input id="wh-date" class="date-input" type="date"></div>
-      <div class="fg"><label>Hours</label><input id="wh-hours" type="number" min="0" max="24" step=".25" placeholder="8"></div>
+      <div class="fg fg-hours"><label>Hours</label><input id="wh-hours" type="number" min="0" max="24" step=".25" placeholder="8"></div>
       <button class="btn btn-orange" onclick="whAdd()">Log</button>
     </div>
   </div>
