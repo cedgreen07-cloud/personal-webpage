@@ -4,11 +4,13 @@ const axios   = require('axios');
 const fs      = require('fs');
 const path    = require('path');
 const crypto  = require('crypto');
+const { Redis } = require('@upstash/redis');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
 const TOKEN_FILE  = path.join(__dirname, 'tokens.json');
+const TOKEN_KEY   = 'whoop_tokens';
 const WHOOP_AUTH  = 'https://api.prod.whoop.com/oauth/oauth2/auth';
 const WHOOP_TOKEN = 'https://api.prod.whoop.com/oauth/oauth2/token';
 const WHOOP_API   = 'https://api.prod.whoop.com/developer/v2';
@@ -16,21 +18,34 @@ const BASE_URL    = process.env.BASE_URL || `http://localhost:${PORT}`;
 const REDIRECT    = `${BASE_URL}/auth/whoop/callback`;
 const SCOPES      = 'read:recovery read:sleep read:workout read:profile read:cycles read:body_measurement offline';
 
+const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+  ? new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN })
+  : null;
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── Token helpers ────────────────────────────────────────────────────────────
-function loadTokens() {
+// Uses Upstash Redis when configured (persists across Render restarts/redeploys);
+// falls back to a local JSON file for local development.
+async function loadTokens() {
+  if (redis) return await redis.get(TOKEN_KEY);
   try { return JSON.parse(fs.readFileSync(TOKEN_FILE, 'utf8')); }
   catch { return null; }
 }
 
-function saveTokens(t) {
+async function saveTokens(t) {
+  if (redis) { await redis.set(TOKEN_KEY, t); return; }
   fs.writeFileSync(TOKEN_FILE, JSON.stringify(t, null, 2));
 }
 
+async function clearTokens() {
+  if (redis) { await redis.del(TOKEN_KEY); return; }
+  try { fs.unlinkSync(TOKEN_FILE); } catch {}
+}
+
 async function getValidToken() {
-  const t = loadTokens();
+  const t = await loadTokens();
   if (!t) return null;
   // Refresh if expiring within 5 minutes
   if (t.expires_at && Date.now() > t.expires_at - 300_000) {
@@ -42,7 +57,7 @@ async function getValidToken() {
         client_secret: process.env.WHOOP_CLIENT_SECRET,
       }), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
       const fresh = { ...res.data, expires_at: Date.now() + res.data.expires_in * 1000 };
-      saveTokens(fresh);
+      await saveTokens(fresh);
       return fresh.access_token;
     } catch (e) {
       console.error('Token refresh failed:', e.response?.data || e.message);
@@ -83,7 +98,7 @@ app.get('/auth/whoop/callback', async (req, res) => {
       client_id:     process.env.WHOOP_CLIENT_ID,
       client_secret: process.env.WHOOP_CLIENT_SECRET,
     }), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
-    saveTokens({ ...r.data, expires_at: Date.now() + r.data.expires_in * 1000 });
+    await saveTokens({ ...r.data, expires_at: Date.now() + r.data.expires_in * 1000 });
     res.redirect('/?whoop_connected=1');
   } catch (e) {
     console.error('OAuth exchange failed:', e.response?.data || e.message);
@@ -91,8 +106,8 @@ app.get('/auth/whoop/callback', async (req, res) => {
   }
 });
 
-app.post('/auth/whoop/disconnect', (req, res) => {
-  try { fs.unlinkSync(TOKEN_FILE); } catch {}
+app.post('/auth/whoop/disconnect', async (req, res) => {
+  await clearTokens();
   res.json({ ok: true });
 });
 
