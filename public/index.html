@@ -94,6 +94,18 @@ nav{display:flex;align-items:center;gap:4px;padding:16px 24px;padding-top:calc(1
 .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
 .card-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.18em;font-family:var(--mono)}
 
+/* HOME */
+.home-header{text-align:center;padding:40px 20px;margin-bottom:8px}
+.home-title{font-size:32px;font-weight:800;font-family:var(--mono);color:var(--text);letter-spacing:.04em;text-shadow:0 0 24px rgba(212,175,55,.35)}
+.home-sub{font-size:13px;color:var(--muted);margin-top:10px;text-transform:uppercase;letter-spacing:.18em;font-family:var(--mono)}
+.home-tile{position:relative;background:var(--surface);border:1px solid rgba(255,255,255,.04);border-radius:var(--r-sm);padding:20px 18px;box-shadow:0 4px 24px rgba(0,0,0,.35);cursor:pointer;transition:border-color .2s,transform .2s,box-shadow .2s;overflow:hidden}
+.home-tile::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent);opacity:.6;transition:opacity .2s}
+.home-tile:hover{border-color:rgba(212,175,55,.3);transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.45)}
+.home-tile:hover::before{opacity:1}
+.home-tile-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.22em;font-family:var(--mono);margin-bottom:14px}
+.home-tile-value{font-size:28px;font-weight:800;font-family:var(--mono);color:var(--accent);line-height:1}
+.home-tile-sub{font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.16em;font-family:var(--mono);margin-top:8px}
+
 /* STAT TILES */
 .stat-tile{background:var(--surface2);border:1px solid rgba(255,255,255,.04);border-radius:var(--r-sm);padding:16px;transition:border-color .2s,transform .2s}
 .stat-tile:hover{border-color:rgba(255,255,255,.1);transform:translateY(-1px)}
@@ -209,15 +221,26 @@ select option{background:var(--surface2)}
 
 <nav>
   <span class="logo">Tracker</span>
-  <button class="tab-btn active" data-tab="whoop">Whoop</button>
+  <button class="tab-btn active" data-tab="home">Home</button>
+  <button class="tab-btn" data-tab="whoop">Whoop</button>
   <button class="tab-btn" data-tab="nutrition">Nutrition</button>
   <button class="tab-btn" data-tab="workhours">Work Hours</button>
   <button class="tab-btn" data-tab="investments">Investments</button>
   <button class="tab-btn" data-tab="habits">Habits</button>
 </nav>
 
+<!-- ══════════════════════════ HOME ══════════════════════════ -->
+<section id="home" class="section active">
+  <div class="home-header">
+    <div class="home-title">Hello, Master Green</div>
+    <div class="home-sub">Here is your overview for today</div>
+  </div>
+
+  <div class="five-col" id="home-summary"></div>
+</section>
+
 <!-- ══════════════════════════ WHOOP ══════════════════════════ -->
-<section id="whoop" class="section active">
+<section id="whoop" class="section">
   <div id="whoop-banner" class="connect-banner">
     <span class="banner-icon">⌚</span>
     <div class="banner-text">
@@ -432,8 +455,38 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById(btn.dataset.tab).classList.add('active');
     if (btn.dataset.tab === 'whoop') whoopInit();
     if (btn.dataset.tab === 'nutrition') fatsecretInit();
+    if (btn.dataset.tab === 'home') homeRender();
   });
 });
+
+// ─── HOME ─────────────────────────────────────────────────────────────────────
+function homeRender() {
+  const recEl = document.querySelector('#whoop-today-stats .stat-tile:nth-child(2) .stat-value');
+  const recovery = recEl ? recEl.textContent : '--';
+
+  const calEl = document.querySelector('#nutr-progress .stat-tile:nth-child(1) .stat-value');
+  const calories = calEl ? calEl.childNodes[0].textContent.trim() : '--';
+
+  const earnings  = document.getElementById('wh-period-earnings')?.textContent  || '$0.00';
+  const portfolio = document.getElementById('inv-total')?.textContent           || '$0.00';
+
+  const habitsEl = document.querySelector('#habits-summary .stat-tile:nth-child(1) .stat-value');
+  const habitsPct = habitsEl ? habitsEl.textContent : '0%';
+
+  const tile = (tab, title, label, value) => `
+    <div class="home-tile" onclick="document.querySelector('[data-tab=&quot;${tab}&quot;]').click()">
+      <div class="home-tile-label">${title}</div>
+      <div class="home-tile-value">${value}</div>
+      <div class="home-tile-sub">${label}</div>
+    </div>`;
+
+  document.getElementById('home-summary').innerHTML =
+    tile('whoop',       'Whoop',       'Recovery',            recovery) +
+    tile('nutrition',   'Nutrition',   'Calories Today',      calories) +
+    tile('workhours',   'Work Hours',  'Pay Period Earnings', earnings) +
+    tile('investments', 'Investments', 'Portfolio Value',     portfolio) +
+    tile('habits',      'Habits',      "Today's Completion",  habitsPct);
+}
 
 // ─── WHOOP ────────────────────────────────────────────────────────────────────
 const SPORT = {0:'Running',1:'Cycling',16:'Baseball',17:'Basketball',18:'Rowing',19:'Fencing',20:'Field Hockey',21:'Football',22:'Golf',24:'Ice Hockey',25:'Lacrosse',27:'Martial Arts',28:'Pool Swim',29:'Open Water Swim',30:'Paddling',31:'Rock Climbing',32:'Rugby',33:'Sailing',34:'Skiing',35:'Soccer',36:'Softball',37:'Squash',38:'Tennis',39:'Track & Field',40:'Volleyball',41:'Water Polo',42:'Wrestling',43:'Boxing',44:'Dance',45:'Pilates',46:'Yoga',47:'Weightlifting',48:'Cross Country Skiing',49:'Functional Fitness',50:'Duathlon',51:'Gymnastics',52:'Hiking',53:'Horseback Riding',54:'Kayaking',55:'Martial Arts',56:'Mountain Biking',57:'Powerlifting',58:'Rock Climbing',59:'Rowing',60:'Paddle Tennis',61:'Skiing',62:'Snowboarding',63:'Squash',64:'Stand Up Paddling',65:'Surf',66:'Swimming',67:'Waterpolo',68:'Wheelchair',71:'HIIT',73:'Spin',74:'Triathlon',75:'Walking',76:'Stretching',77:'Cross Training',82:'Activities Classes',83:'Barre',84:'Stage Performance',85:'High Stress Work',86:'Mind & Body',87:'Recovery',88:'Soccer',89:'Meditation',90:'Stair Climber',91:'Cardiovascular',163:'Quarterbacking',164:'Skateboarding',165:'Coaching',166:'Ice Bath',167:'Commuting',168:'Gaming',169:'Snowshoeing',170:'Motocross'};
@@ -478,6 +531,7 @@ async function whoopLoadAll() {
   ]);
   renderWhoopToday(rec.records||[], slp.records||[], cyc.records||[]);
   renderWhoopCharts(rec.records||[], cyc.records||[]);
+  homeRender();
 }
 
 function lastNDays(records, n) {
@@ -682,6 +736,7 @@ async function nutrRender() {
   }
 
   nutrLoadCharts();
+  homeRender();
 }
 
 async function nutrLoadCharts() {
@@ -793,6 +848,7 @@ function whRender() {
   document.getElementById('wh-period-hours').textContent    = fmtH(periodHrs);
   document.getElementById('wh-period-range').textContent    = rangeLabel;
   document.getElementById('wh-period-earnings').textContent = fmt$(periodHrs * rate);
+  homeRender();
 
   let shown = periodLogs.slice(0,60);
   const list = document.getElementById('wh-list');
@@ -905,6 +961,7 @@ function invRender() {
     });
   }
   renderLineChart('inv-balance-chart', points, 'var(--accent)', '', true);
+  homeRender();
 }
 
 // ─── HABITS ───────────────────────────────────────────────────────────────────
@@ -1006,6 +1063,7 @@ function habitsRender() {
     };
   });
   renderLineChart('habits-chart', chartPoints, 'var(--accent)', '%');
+  homeRender();
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
