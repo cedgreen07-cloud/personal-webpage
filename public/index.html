@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Personal Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #000000;
@@ -20,11 +23,13 @@
   --yellow:#d4af37; --yellow-dim:rgba(212,175,55,.07);
   --teal:  #8a94a6; --teal-dim:  rgba(138,148,166,.07);
   --text:  #d8d9dc; --muted: #55565c; --muted2: #8c8d94;
-  --r: 3px;
-  --mono: 'SF Mono','Cascadia Code','Consolas',monospace;
+  --r: 12px;
+  --r-sm: 8px;
+  --mono: 'Archivo','SF Mono','Cascadia Code','Consolas',sans-serif;
+  --sans: 'Archivo',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;font-size:15px;letter-spacing:.01em;background-image:radial-gradient(ellipse at top,rgba(255,255,255,.03),transparent 60%)}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;font-size:15px;letter-spacing:.01em;background-image:radial-gradient(ellipse at top,rgba(255,255,255,.03),transparent 60%)}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:0}
@@ -84,12 +89,14 @@ nav{display:flex;align-items:center;gap:4px;padding:16px 24px;padding-top:calc(1
 }
 
 /* CARDS */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;position:relative}
-.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card{background:var(--surface);border:1px solid rgba(255,255,255,.04);border-radius:var(--r);padding:22px;margin-bottom:18px;position:relative;box-shadow:0 4px 24px rgba(0,0,0,.35);transition:border-color .2s,box-shadow .2s}
+.card:hover{border-color:rgba(255,255,255,.08)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
 .card-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.18em;font-family:var(--mono)}
 
 /* STAT TILES */
-.stat-tile{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.stat-tile{background:var(--surface2);border:1px solid rgba(255,255,255,.04);border-radius:var(--r-sm);padding:16px;transition:border-color .2s,transform .2s}
+.stat-tile:hover{border-color:rgba(255,255,255,.1);transform:translateY(-1px)}
 .stat-label{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;font-family:var(--mono)}
 .stat-value{font-size:24px;font-weight:700;line-height:1;font-family:var(--mono)}
 .stat-sub{font-size:12px;color:var(--muted2);margin-top:4px}
@@ -100,26 +107,39 @@ nav{display:flex;align-items:center;gap:4px;padding:16px 24px;padding-top:calc(1
 .form-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
 .fg{display:flex;flex-direction:column;gap:5px;flex:1;min-width:110px}
 .fg label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.1em}
-input,select{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--r);padding:8px 11px;font-size:13px;outline:none;width:100%;transition:border-color .15s}
+input,select{background:var(--surface2);border:1px solid rgba(255,255,255,.05);color:var(--text);border-radius:var(--r-sm);padding:9px 12px;font-size:13px;outline:none;width:100%;transition:border-color .2s,box-shadow .2s}
 .date-input{max-width:140px;font-size:12px;padding:6px 8px}
-input:focus,select:focus{border-color:var(--accent)}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(212,175,55,.12)}
 select option{background:var(--surface2)}
-.btn{padding:9px 16px;border-radius:var(--r);border:1px solid transparent;cursor:pointer;font-size:11px;font-weight:700;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.12em}
-.btn:hover{border-color:currentColor}
+.btn{padding:10px 18px;border-radius:var(--r-sm);border:1px solid transparent;cursor:pointer;font-size:11px;font-weight:700;transition:all .2s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.12em}
+.btn:hover{border-color:currentColor;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.btn:active{transform:translateY(0)}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .btn-green{background:transparent;color:var(--green);border-color:rgba(212,175,55,.3)}
 .btn-blue{background:transparent;color:var(--blue);border-color:rgba(138,148,166,.3)}
 .btn-purple{background:transparent;color:var(--purple);border-color:rgba(168,168,179,.3)}
 .btn-red-outline{background:transparent;color:var(--red);border-color:rgba(196,84,74,.3)}
-.btn-ghost{background:var(--surface2);color:var(--muted2);border-color:var(--border)}
+.btn-ghost{background:var(--surface2);color:var(--muted2);border-color:rgba(255,255,255,.05)}
 .btn-teal{background:transparent;color:var(--teal);border-color:rgba(138,148,166,.3)}
 .btn-orange{background:transparent;color:var(--orange);border-color:rgba(212,175,55,.3)}
-.del-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px 6px;border-radius:var(--r);font-size:14px;line-height:1;transition:color .15s}
+.del-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px 6px;border-radius:var(--r-sm);font-size:14px;line-height:1;transition:color .15s}
 .del-btn:hover{color:var(--red)}
+
+/* FOOD SEARCH */
+.search-wrap{position:relative}
+.search-results{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:20;background:var(--surface2);border:1px solid rgba(255,255,255,.06);border-radius:var(--r-sm);max-height:240px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.search-item{padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border)}
+.search-item:last-child{border-bottom:none}
+.search-item:hover{background:var(--surface3)}
+.search-item-name{font-size:13px;font-weight:600}
+.search-item-meta{font-size:11px;color:var(--muted2);margin-top:2px}
+.search-item.empty{color:var(--muted);text-align:center;cursor:default}
+.search-item.empty:hover{background:transparent}
 
 /* ENTRIES */
 .entry-list{display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto;padding-right:2px}
-.entry{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-left:2px solid var(--border);border-radius:var(--r);padding:11px 14px}
+.entry{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid rgba(255,255,255,.04);border-left:2px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;transition:border-color .2s}
+.entry:hover{border-color:rgba(255,255,255,.1)}
 .entry-body{flex:1;min-width:0}
 .entry-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .entry-meta{font-size:11px;color:var(--muted2);margin-top:3px}
@@ -142,7 +162,8 @@ select option{background:var(--surface2)}
 .ring-label{font-size:12px;color:var(--muted2);margin-top:4px}
 
 /* WHOOP CARDS */
-.whoop-day-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px}
+.whoop-day-card{background:var(--surface2);border:1px solid rgba(255,255,255,.04);border-radius:var(--r-sm);padding:14px;display:flex;flex-direction:column;gap:8px;transition:border-color .2s}
+.whoop-day-card:hover{border-color:rgba(255,255,255,.1)}
 .whoop-day-date{font-size:10px;color:var(--muted);font-weight:600;font-family:var(--mono);text-transform:uppercase;letter-spacing:.12em}
 .whoop-metric{display:flex;justify-content:space-between;font-size:12px}
 .whoop-metric-label{color:var(--muted2)}
@@ -157,7 +178,7 @@ select option{background:var(--surface2)}
 
 /* WORK CALENDAR */
 .week-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
-.day-cell{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:8px 6px;text-align:center;font-size:11px}
+.day-cell{background:var(--surface2);border:1px solid rgba(255,255,255,.04);border-radius:var(--r-sm);padding:8px 6px;text-align:center;font-size:11px;transition:border-color .2s}
 .day-cell .day-name{color:var(--muted);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.1em}
 .day-cell .day-hrs{font-size:16px;font-weight:700;font-family:var(--mono)}
 .day-cell.has-hours{border-color:rgba(212,175,55,.35);box-shadow:inset 0 0 10px -6px rgba(212,175,55,.5)}
@@ -166,7 +187,7 @@ select option{background:var(--surface2)}
 .divider{height:1px;background:var(--border);margin:16px 0}
 
 /* CONNECT BANNER */
-.connect-banner{background:var(--surface2);border:1px solid var(--border);border-left:2px solid var(--red);border-radius:var(--r);padding:20px 24px;display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.connect-banner{background:var(--surface2);border:1px solid rgba(255,255,255,.04);border-left:2px solid var(--red);border-radius:var(--r);padding:20px 24px;display:flex;align-items:center;gap:16px;margin-bottom:16px;box-shadow:0 4px 24px rgba(0,0,0,.35);transition:border-color .2s}
 .connect-banner.connected{border-left-color:var(--accent)}
 .banner-icon{display:none}
 .banner-text{flex:1}
@@ -175,8 +196,8 @@ select option{background:var(--surface2)}
 
 /* Pill selectors */
 .pill-group{display:flex;gap:6px;flex-wrap:wrap}
-.pill{padding:5px 13px;border-radius:var(--r);border:1px solid var(--border);background:transparent;color:var(--muted2);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.08em}
-.pill:hover{border-color:var(--muted2);color:var(--text)}
+.pill{padding:6px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.06);background:transparent;color:var(--muted2);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.08em}
+.pill:hover{border-color:var(--muted2);color:var(--text);transform:translateY(-1px)}
 .pill.active{background:var(--accent-dim);border-color:rgba(212,175,55,.35);color:var(--accent)}
 
 /* Tooltip */
@@ -261,6 +282,16 @@ select option{background:var(--surface2)}
           </select>
         </div>
         <div class="fg"><label>Date</label><input id="m-date" class="date-input" type="date"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg search-wrap" style="flex:1 1 100%">
+          <label>Search Food</label>
+          <input id="m-search" type="text" placeholder="e.g. grilled chicken breast" oninput="fatsecretSearch(this.value)" autocomplete="off">
+          <div id="m-search-results" class="search-results"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Food Name</label><input id="m-name" type="text" placeholder="e.g. Chicken Breast"></div>
       </div>
       <div class="form-row">
         <div class="fg"><label>Calories</label><input id="m-cal" type="number" min="0" placeholder="0"></div>
@@ -498,11 +529,20 @@ function renderLineChart(containerId, points, color, unit) {
 
   const withVals = coords.filter(c => c.hasVal);
   const path = withVals.map((c, i) => (i === 0 ? 'M' : 'L') + c.x + ' ' + c.y).join(' ');
+  const areaPath = `${path} L${withVals[withVals.length-1].x} ${height - padY} L${withVals[0].x} ${height - padY} Z`;
   const circles = withVals.map(c => `<circle cx="${c.x}" cy="${c.y}" r="4" fill="${color}"/>`).join('');
   const valueLabels = withVals.map(c => `<text x="${c.x}" y="${c.y - 10}" font-size="11" fill="${color}" text-anchor="middle" font-weight="700">${c.value}${unit||''}</text>`).join('');
   const dateLabels = coords.map(c => `<text x="${c.x}" y="${height - 6}" font-size="10" fill="var(--muted)" text-anchor="middle">${c.label}</text>`).join('');
+  const gradId = `grad-${containerId}`;
 
   container.innerHTML = `<svg viewBox="0 0 ${width} ${height}" style="width:100%;height:160px;display:block">
+    <defs>
+      <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${color}" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${areaPath}" fill="url(#${gradId})" stroke="none"/>
     <path d="${path}" fill="none" stroke="${color}" stroke-width="2"/>
     ${circles}${valueLabels}${dateLabels}
   </svg>`;
@@ -582,11 +622,58 @@ function nutrLoadGoals() {
   if (g.fat)     document.getElementById('g-fat').value     = g.fat;
 }
 
+let fatsecretSearchTimer;
+
+async function fatsecretSearch(q) {
+  clearTimeout(fatsecretSearchTimer);
+  const resultsEl = document.getElementById('m-search-results');
+  if (!q || q.trim().length < 2) {
+    resultsEl.style.display = 'none';
+    resultsEl.innerHTML = '';
+    return;
+  }
+  fatsecretSearchTimer = setTimeout(async () => {
+    try {
+      const data = await fetch(`/api/fatsecret/search?q=${encodeURIComponent(q)}`).then(r=>r.json());
+      const foods = data.foods || [];
+      if (!foods.length) {
+        resultsEl.innerHTML = '<div class="search-item empty">No results</div>';
+      } else {
+        resultsEl.innerHTML = foods.map(f => `<div class="search-item" onclick="fatsecretPick('${f.food_id}')">
+          <div class="search-item-name">${esc(f.food_name)}</div>
+          <div class="search-item-meta">${esc(f.food_description || '')}</div>
+        </div>`).join('');
+      }
+      resultsEl.style.display = 'block';
+    } catch {
+      resultsEl.style.display = 'none';
+    }
+  }, 350);
+}
+
+async function fatsecretPick(foodId) {
+  const resultsEl = document.getElementById('m-search-results');
+  resultsEl.style.display = 'none';
+  try {
+    const food = await fetch(`/api/fatsecret/food/${foodId}`).then(r=>r.json());
+    let serving = food.servings?.serving;
+    if (Array.isArray(serving)) serving = serving[0];
+    if (!serving) return;
+    document.getElementById('m-name').value    = food.food_name || '';
+    document.getElementById('m-cal').value     = Math.round(+serving.calories || 0);
+    document.getElementById('m-protein').value = Math.round(+serving.protein || 0);
+    document.getElementById('m-carbs').value   = Math.round(+serving.carbohydrate || 0);
+    document.getElementById('m-fat').value     = Math.round(+serving.fat || 0);
+    document.getElementById('m-search').value  = '';
+  } catch {}
+}
+
 function nutrAdd() {
-  const name = document.getElementById('m-meal').value;
+  const meal = document.getElementById('m-meal').value;
+  const foodName = document.getElementById('m-name').value.trim();
   const entry = {
     id:      uid(),
-    name,
+    name:    foodName || meal,
     date:    document.getElementById('m-date').value,
     cal:     +document.getElementById('m-cal').value     || 0,
     protein: +document.getElementById('m-protein').value || 0,
@@ -599,7 +686,7 @@ function nutrAdd() {
   const meals = load('meals');
   meals.unshift(entry);
   save('meals', meals);
-  ['m-cal','m-protein','m-carbs','m-fat'].forEach(id => document.getElementById(id).value = '');
+  ['m-name','m-cal','m-protein','m-carbs','m-fat'].forEach(id => document.getElementById(id).value = '');
   nutrRender();
 }
 
