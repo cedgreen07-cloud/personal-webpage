@@ -72,12 +72,14 @@ nav{display:flex;align-items:center;gap:4px;padding:16px 24px;padding-top:calc(1
   .stat-value{font-size:19px}
   .stat-label{font-size:9px;letter-spacing:.08em}
 
-  .form-row{flex-direction:row;flex-wrap:nowrap!important;align-items:flex-end;gap:6px!important}
+  .form-row{flex-direction:row;flex-wrap:wrap!important;align-items:flex-end;gap:6px!important}
   .fg{flex:1 1 100px;min-width:0;width:auto}
   .fg-hours{flex:0 0 76px!important;width:auto}
   .btn{font-size:11px;padding:9px 10px;letter-spacing:.04em;width:auto;flex:0 0 auto;white-space:nowrap}
   .date-input{max-width:none!important;width:100%;min-width:0;font-size:12px;padding:7px 8px}
   .nutr-date-fg{flex:1 1 auto!important;min-width:0!important;width:100%}
+  .wh-date-fg{flex:1 1 100%!important;width:100%}
+  .wh-date-fg .date-input{text-align:center}
 
   .week-row{gap:4px}
   .day-cell{padding:6px 2px;font-size:9px}
@@ -340,7 +342,7 @@ select option{background:var(--surface2)}
   <div class="card">
     <div class="card-header"><span class="card-title">Log Hours</span></div>
     <div class="form-row">
-      <div class="fg"><label>Date</label><input id="wh-date" class="date-input" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" maxlength="10"></div>
+      <div class="fg wh-date-fg"><label>Date</label><input id="wh-date" class="date-input" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" maxlength="10"></div>
       <div class="fg fg-hours"><label>Hours</label><input id="wh-hours" type="number" min="0" max="24" step=".25" placeholder="8"></div>
       <button class="btn btn-orange" onclick="whAdd()">Log</button>
     </div>
