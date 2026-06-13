@@ -258,14 +258,8 @@ select option{background:var(--surface2)}
     <div id="fatsecret-banner-btn"></div>
   </div>
 
-  <div class="card">
-    <div class="card-header"><span class="card-title">Daily Goals</span></div>
-    <div class="form-row">
-      <div class="fg"><label>Calories</label><input id="g-cal" type="number" placeholder="2000" oninput="nutrSaveGoals()"></div>
-      <div class="fg"><label>Protein (g)</label><input id="g-protein" type="number" placeholder="150" oninput="nutrSaveGoals()"></div>
-      <div class="fg"><label>Carbs (g)</label><input id="g-carbs" type="number" placeholder="250" oninput="nutrSaveGoals()"></div>
-      <div class="fg"><label>Fat (g)</label><input id="g-fat" type="number" placeholder="65" oninput="nutrSaveGoals()"></div>
-    </div>
+  <div id="fatsecret-disconnect-row" style="display:none;justify-content:flex-end;margin-bottom:8px">
+    <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="fatsecretDisconnect()">Disconnect FatSecret</button>
   </div>
 
   <!-- Daily progress -->
@@ -279,36 +273,21 @@ select option{background:var(--surface2)}
     <div id="nutr-progress" class="four-col"></div>
   </div>
 
-  <!-- Manual log -->
   <div class="card">
-    <div class="card-header"><span class="card-title">Manual Entry</span></div>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <div class="form-row">
-        <div class="fg"><label>Meal</label>
-          <select id="m-meal">
-            <option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option>
-          </select>
-        </div>
-        <div class="fg"><label>Date</label><input id="m-date" class="date-input" type="date"></div>
-      </div>
-      <div class="form-row">
-        <div class="fg search-wrap" style="flex:1 1 100%">
-          <label>Search Food</label>
-          <input id="m-search" type="text" placeholder="e.g. grilled chicken breast" oninput="fatsecretSearch(this.value)" autocomplete="off">
-          <div id="m-search-results" class="search-results"></div>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="fg"><label>Food Name</label><input id="m-name" type="text" placeholder="e.g. Chicken Breast"></div>
-      </div>
-      <div class="form-row">
-        <div class="fg"><label>Calories</label><input id="m-cal" type="number" min="0" placeholder="0"></div>
-        <div class="fg"><label>Protein (g)</label><input id="m-protein" type="number" min="0" step=".1" placeholder="0"></div>
-        <div class="fg"><label>Carbs (g)</label><input id="m-carbs" type="number" min="0" step=".1" placeholder="0"></div>
-        <div class="fg"><label>Fat (g)</label><input id="m-fat" type="number" min="0" step=".1" placeholder="0"></div>
-      </div>
-      <button class="btn btn-blue" onclick="nutrAdd()" style="align-self:flex-start">Log Food</button>
-    </div>
+    <div class="card-header"><span class="card-title">Calories — Last 5 Days</span></div>
+    <div id="nutr-chart-cal"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Protein — Last 5 Days</span></div>
+    <div id="nutr-chart-protein"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Carbs — Last 5 Days</span></div>
+    <div id="nutr-chart-carbs"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Fat — Last 5 Days</span></div>
+    <div id="nutr-chart-fat"></div>
   </div>
 
   <!-- Logged meals -->
@@ -615,25 +594,6 @@ if (qp.get('fatsecret_connected')) {
 }
 
 // ─── NUTRITION ────────────────────────────────────────────────────────────────
-document.getElementById('m-date').value = today();
-
-function nutrSaveGoals() {
-  save('nutrGoals', {
-    cal:    +document.getElementById('g-cal').value     || 0,
-    protein:+document.getElementById('g-protein').value || 0,
-    carbs:  +document.getElementById('g-carbs').value   || 0,
-    fat:    +document.getElementById('g-fat').value     || 0,
-  });
-  nutrRender();
-}
-
-function nutrLoadGoals() {
-  const g = loadO('nutrGoals');
-  if (g.cal)     document.getElementById('g-cal').value     = g.cal;
-  if (g.protein) document.getElementById('g-protein').value = g.protein;
-  if (g.carbs)   document.getElementById('g-carbs').value   = g.carbs;
-  if (g.fat)     document.getElementById('g-fat').value     = g.fat;
-}
 
 // ─── FatSecret diary sync (3-legged OAuth) ────────────────────────────────────
 let fatsecretConnected = false;
@@ -643,15 +603,15 @@ async function fatsecretInit() {
   try {
     const s = await fetch('/api/fatsecret/status').then(r=>r.json());
     const banner = document.getElementById('fatsecret-banner');
+    const disconnectRow = document.getElementById('fatsecret-disconnect-row');
     const btnEl  = document.getElementById('fatsecret-banner-btn');
     fatsecretConnected = !!s.connected;
     if (fatsecretConnected) {
-      banner.classList.add('connected');
-      document.getElementById('fatsecret-banner-title').textContent = 'FatSecret Connected';
-      document.getElementById('fatsecret-banner-sub').textContent   = 'Food diary entries logged in the FatSecret app will sync automatically.';
-      btnEl.innerHTML = `<button class="btn btn-ghost" onclick="fatsecretDisconnect()">Disconnect</button>`;
+      banner.style.display = 'none';
+      disconnectRow.style.display = 'flex';
     } else {
-      banner.classList.remove('connected');
+      banner.style.display = 'flex';
+      disconnectRow.style.display = 'none';
       document.getElementById('fatsecret-banner-title').textContent = 'Connect FatSecret';
       document.getElementById('fatsecret-banner-sub').textContent   = 'Sync your food diary entries logged in the FatSecret app automatically.';
       btnEl.innerHTML = `<a href="/auth/fatsecret" class="btn btn-red-outline" style="text-decoration:none">Connect FatSecret</a>`;
@@ -686,74 +646,6 @@ async function fatsecretFetchDiary(date) {
   } catch {
     return [];
   }
-}
-
-let fatsecretSearchTimer;
-
-async function fatsecretSearch(q) {
-  clearTimeout(fatsecretSearchTimer);
-  const resultsEl = document.getElementById('m-search-results');
-  if (!q || q.trim().length < 2) {
-    resultsEl.style.display = 'none';
-    resultsEl.innerHTML = '';
-    return;
-  }
-  fatsecretSearchTimer = setTimeout(async () => {
-    try {
-      const data = await fetch(`/api/fatsecret/search?q=${encodeURIComponent(q)}`).then(r=>r.json());
-      const foods = data.foods || [];
-      if (!foods.length) {
-        resultsEl.innerHTML = '<div class="search-item empty">No results</div>';
-      } else {
-        resultsEl.innerHTML = foods.map(f => `<div class="search-item" onclick="fatsecretPick('${f.food_id}')">
-          <div class="search-item-name">${esc(f.food_name)}</div>
-          <div class="search-item-meta">${esc(f.food_description || '')}</div>
-        </div>`).join('');
-      }
-      resultsEl.style.display = 'block';
-    } catch {
-      resultsEl.style.display = 'none';
-    }
-  }, 350);
-}
-
-async function fatsecretPick(foodId) {
-  const resultsEl = document.getElementById('m-search-results');
-  resultsEl.style.display = 'none';
-  try {
-    const food = await fetch(`/api/fatsecret/food/${foodId}`).then(r=>r.json());
-    let serving = food.servings?.serving;
-    if (Array.isArray(serving)) serving = serving[0];
-    if (!serving) return;
-    document.getElementById('m-name').value    = food.food_name || '';
-    document.getElementById('m-cal').value     = Math.round(+serving.calories || 0);
-    document.getElementById('m-protein').value = Math.round(+serving.protein || 0);
-    document.getElementById('m-carbs').value   = Math.round(+serving.carbohydrate || 0);
-    document.getElementById('m-fat').value     = Math.round(+serving.fat || 0);
-    document.getElementById('m-search').value  = '';
-  } catch {}
-}
-
-function nutrAdd() {
-  const meal = document.getElementById('m-meal').value;
-  const foodName = document.getElementById('m-name').value.trim();
-  const entry = {
-    id:      uid(),
-    name:    foodName || meal,
-    date:    document.getElementById('m-date').value,
-    cal:     +document.getElementById('m-cal').value     || 0,
-    protein: +document.getElementById('m-protein').value || 0,
-    carbs:   +document.getElementById('m-carbs').value   || 0,
-    fat:     +document.getElementById('m-fat').value     || 0,
-    sodium:  0,
-    sugar:   0,
-    source:  'manual',
-  };
-  const meals = load('meals');
-  meals.unshift(entry);
-  save('meals', meals);
-  ['m-name','m-cal','m-protein','m-carbs','m-fat'].forEach(id => document.getElementById(id).value = '');
-  nutrRender();
 }
 
 async function nutrRender() {
@@ -796,6 +688,30 @@ async function nutrRender() {
       ${m.source==='fatsecret' ? '' : `<button class="del-btn" onclick="nutrDelete('${m.id}')">✕</button>`}
     </div>`).join('');
   }
+
+  nutrLoadCharts();
+}
+
+async function nutrLoadCharts() {
+  const meals = load('meals');
+  const dates = [];
+  for (let i = 4; i >= 0; i--) {
+    const d = new Date(today() + 'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate() - i);
+    dates.push(d.toISOString().slice(0,10));
+  }
+  const totals = await Promise.all(dates.map(async date => {
+    let dayMeals = meals.filter(m => m.date === date);
+    if (fatsecretConnected) dayMeals = dayMeals.concat(await fatsecretFetchDiary(date));
+    return dayMeals.reduce((a,m) => ({
+      cal:a.cal+m.cal, protein:a.protein+m.protein, carbs:a.carbs+m.carbs, fat:a.fat+m.fat
+    }), {cal:0,protein:0,carbs:0,fat:0});
+  }));
+  const labels = dates.map(d => new Date(d + 'T00:00:00Z').toLocaleDateString('en-US', {month:'short', day:'numeric', timeZone:'UTC'}));
+  renderLineChart('nutr-chart-cal',     labels.map((label,i)=>({label, value: Math.round(totals[i].cal)})),     'var(--accent)', '');
+  renderLineChart('nutr-chart-protein', labels.map((label,i)=>({label, value: Math.round(totals[i].protein)})), 'var(--accent)', 'g');
+  renderLineChart('nutr-chart-carbs',   labels.map((label,i)=>({label, value: Math.round(totals[i].carbs)})),   'var(--accent)', 'g');
+  renderLineChart('nutr-chart-fat',     labels.map((label,i)=>({label, value: Math.round(totals[i].fat)})),     'var(--accent)', 'g');
 }
 
 function nutrDelete(id) {
@@ -1103,7 +1019,6 @@ function habitsRender() {
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 document.getElementById('nutr-view-date').value = today();
-nutrLoadGoals();
 fatsecretInit();
 invLoadCash();
 whPopPeriods(); whRender();
@@ -1116,7 +1031,6 @@ whoopInit();
 // Set default date fields
 document.getElementById('wh-date').value = today();
 document.getElementById('t-date').value  = today();
-document.getElementById('m-date').value  = today();
 </script>
 </body>
 </html>
