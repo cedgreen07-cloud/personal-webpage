@@ -698,7 +698,6 @@ async function fatsecretFetchDiary(date) {
 }
 
 async function nutrRender() {
-  const goals  = loadO('nutrGoals');
   const meals  = load('meals');
   const viewDate = document.getElementById('nutr-view-date').value || today();
   let todayMeals = meals.filter(m => m.date === viewDate);
@@ -709,7 +708,7 @@ async function nutrRender() {
     cal:a.cal+m.cal, protein:a.protein+m.protein, carbs:a.carbs+m.carbs, fat:a.fat+m.fat
   }), {cal:0,protein:0,carbs:0,fat:0});
 
-  const g = { cal:goals.cal||3800, protein:goals.protein||250, carbs:goals.carbs||480, fat:goals.fat||105 };
+  const g = { cal:3800, protein:250, carbs:480, fat:105 };
   const progCard = (label,val,goal,color,unit) => {
     const pct = Math.min(100,(val/goal)*100);
     const over = val > goal;
