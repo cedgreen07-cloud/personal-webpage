@@ -66,6 +66,7 @@ nav{display:flex;align-items:center;gap:4px;padding:16px 24px;padding-top:calc(1
   .card-header{flex-wrap:wrap;gap:8px;margin-bottom:12px}
 
   .two-col,.three-col,.four-col,.five-col{grid-template-columns:repeat(2,1fr);gap:8px}
+  .mobile-full{grid-column:1/-1;order:10}
 
   .stat-tile{padding:12px}
   .stat-value{font-size:19px}
@@ -324,7 +325,7 @@ select option{background:var(--surface2)}
 <section id="workhours" class="section">
   <div class="three-col" style="margin-bottom:16px">
     <div class="stat-tile"><div class="stat-label">Pay Period Hours</div><div class="stat-value orange" id="wh-period-hours">0h</div><div class="stat-sub" id="wh-period-range"></div></div>
-    <div class="stat-tile"><div class="stat-label">Pay Period Earnings</div><div class="stat-value green" id="wh-period-earnings">$0.00</div></div>
+    <div class="stat-tile mobile-full"><div class="stat-label">Pay Period Earnings</div><div class="stat-value green" id="wh-period-earnings">$0.00</div></div>
     <div class="stat-tile">
       <div class="stat-label">Hourly Rate</div>
       <div class="stat-value teal" id="wh-rate-display">$22.00/hr</div>
@@ -473,8 +474,8 @@ function homeRender() {
   const habitsEl = document.querySelector('#habits-summary .stat-tile:nth-child(1) .stat-value');
   const habitsPct = habitsEl ? habitsEl.textContent : '0%';
 
-  const tile = (tab, title, label, value) => `
-    <div class="home-tile" onclick="document.querySelector('[data-tab=&quot;${tab}&quot;]').click()">
+  const tile = (tab, title, label, value, extraClass) => `
+    <div class="home-tile${extraClass ? ' ' + extraClass : ''}" onclick="document.querySelector('[data-tab=&quot;${tab}&quot;]').click()">
       <div class="home-tile-label">${title}</div>
       <div class="home-tile-value">${value}</div>
       <div class="home-tile-sub">${label}</div>
@@ -484,7 +485,7 @@ function homeRender() {
     tile('whoop',       'Whoop',       'Recovery',            recovery) +
     tile('nutrition',   'Nutrition',   'Calories Today',      calories) +
     tile('workhours',   'Work Hours',  'Pay Period Earnings', earnings) +
-    tile('investments', 'Investments', 'Portfolio Value',     portfolio) +
+    tile('investments', 'Investments', 'Portfolio Value',     portfolio, 'mobile-full') +
     tile('habits',      'Habits',      "Today's Completion",  habitsPct);
 }
 
@@ -1051,7 +1052,7 @@ function habitsRender() {
 
   document.getElementById('habits-summary').innerHTML = `
     <div class="stat-tile"><div class="stat-label">Today's Completion</div><div class="stat-value yellow">${todayPct}%</div></div>
-    <div class="stat-tile"><div class="stat-label">This Week's Average Completion</div><div class="stat-value yellow">${weekAvg}%</div></div>
+    <div class="stat-tile mobile-full"><div class="stat-label">This Week's Average Completion</div><div class="stat-value yellow">${weekAvg}%</div></div>
     <div class="stat-tile"><div class="stat-label">This Week's High</div><div class="stat-value yellow">${weekHigh}%</div></div>`;
 
   // Last 4 days completion chart
