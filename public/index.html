@@ -293,7 +293,7 @@ select option{background:var(--surface2)}
     <div class="card-header">
       <span class="card-title">Daily Totals</span>
       <div class="fg nutr-date-fg" style="flex:0 0 auto;min-width:160px">
-        <input id="nutr-view-date" class="date-input" type="date" onchange="nutrRender()">
+        <input id="nutr-view-date" class="date-input" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" maxlength="10" onchange="nutrRender()">
       </div>
     </div>
     <div id="nutr-progress" class="four-col"></div>
@@ -700,7 +700,8 @@ async function fatsecretFetchDiary(date) {
 
 async function nutrRender() {
   const meals  = load('meals');
-  const viewDate = document.getElementById('nutr-view-date').value || today();
+  const viewDateRaw = document.getElementById('nutr-view-date').value.trim();
+  const viewDate = /^\d{4}-\d{2}-\d{2}$/.test(viewDateRaw) ? viewDateRaw : today();
   let todayMeals = meals.filter(m => m.date === viewDate);
   if (fatsecretConnected) {
     todayMeals = todayMeals.concat(await fatsecretFetchDiary(viewDate));
