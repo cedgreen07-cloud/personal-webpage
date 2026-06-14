@@ -1093,6 +1093,11 @@ invRender();
 invRefreshPrices();
 setInterval(invRefreshPrices, 60000);
 setInterval(nutrRender, 60000);
+
+// Re-fetch nutrition data whenever the tab/app regains focus (e.g. after
+// logging food in the FatSecret app and switching back).
+document.addEventListener('visibilitychange', () => { if (!document.hidden) nutrRender(); });
+window.addEventListener('focus', nutrRender);
 habitsRender();
 whoopInit();
 
