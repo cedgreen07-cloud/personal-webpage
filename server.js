@@ -89,7 +89,7 @@ async function getValidToken() {
         client_id:     process.env.WHOOP_CLIENT_ID,
         client_secret: process.env.WHOOP_CLIENT_SECRET,
       }), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
-      const fresh = { ...res.data, expires_at: Date.now() + res.data.expires_in * 1000 };
+      const fresh = { ...t, ...res.data, expires_at: Date.now() + res.data.expires_in * 1000 };
       await saveTokens(TOKEN_KEY, fresh);
       return fresh.access_token;
     } catch (e) {

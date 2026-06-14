@@ -238,7 +238,7 @@ select option{background:var(--surface2)}
 <!-- ══════════════════════════ HOME ══════════════════════════ -->
 <section id="home" class="section active">
   <div class="home-header">
-    <div class="home-title">Hello, Master Green</div>
+    <div class="home-title" id="home-greeting">Hello, Master Green</div>
     <div class="home-sub">Here is your overview for today</div>
   </div>
 
@@ -466,7 +466,17 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 // ─── HOME ─────────────────────────────────────────────────────────────────────
+function homeGreeting() {
+  const h = new Date().getHours();
+  let greeting;
+  if (h >= 4 && h < 11) greeting = 'Good morning';
+  else if (h >= 11 && h < 17) greeting = 'Good afternoon';
+  else greeting = 'Good evening';
+  document.getElementById('home-greeting').textContent = `${greeting}, Master Green`;
+}
+
 function homeRender() {
+  homeGreeting();
   const recEl = document.querySelector('#whoop-today-stats .stat-tile:nth-child(2) .stat-value');
   const recovery = recEl ? recEl.textContent : '--';
 
@@ -1082,6 +1092,7 @@ whPopPeriods(); whRender();
 invRender();
 invRefreshPrices();
 setInterval(invRefreshPrices, 60000);
+setInterval(nutrRender, 60000);
 habitsRender();
 whoopInit();
 
