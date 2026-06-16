@@ -546,8 +546,6 @@ function homeRender() {
       </filter>
     </defs>
     ${gridRings}${axisLines}
-    <circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="3" fill="#333"/>
-    <text x="${(nx-8).toFixed(1)}" y="${(ny+3).toFixed(1)}" fill="#444" font-size="7" font-family="monospace" text-anchor="end" letter-spacing="0.08em">EVEN</text>
     <path d="${dataPath}" fill="url(#hfill)"/>
     <path d="${dataPath}" fill="none" stroke="#d4af37" stroke-width="2" stroke-linejoin="round" filter="url(#hglow)"/>
     ${dots}`;
