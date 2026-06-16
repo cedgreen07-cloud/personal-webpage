@@ -535,13 +535,13 @@ function homeRender() {
 
   // ── Labels rendered inside SVG so they scale with it ──────────────
   const isMobile = window.innerWidth <= 480;
-  const LF = isMobile ? 1.30 : 1.42;
-  const fsName = isMobile ? 14 : 9;
-  const fsVal  = isMobile ? 26 : 18;
-  const fsSub  = isMobile ? 12 : 9;
-  const fsNeut = isMobile ? 11 : 8;
-  const dyVal  = isMobile ? 22 : 15;
-  const dySub  = isMobile ? 18 : 13;
+  const LF = isMobile ? 1.30 : 1.28;
+  const fsName = isMobile ? 14 : 13;
+  const fsVal  = isMobile ? 26 : 26;
+  const fsSub  = isMobile ? 12 : 11;
+  const fsNeut = isMobile ? 11 : 10;
+  const dyVal  = isMobile ? 22 : 20;
+  const dySub  = isMobile ? 18 : 16;
   const labels = metrics.map((m,i) => {
     const a = angles[i];
     const [lx,ly] = pt(a, LF);
