@@ -534,23 +534,29 @@ function homeRender() {
   const dots      = dataPoints.map(([x,y])=>`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="#1a1a1c" stroke="#d4af37" stroke-width="2" filter="url(#hglow)"/>`).join('');
 
   // ── Labels rendered inside SVG so they scale with it ──────────────
-  const LF = 1.42;
+  const isMobile = window.innerWidth <= 480;
+  const LF = isMobile ? 1.30 : 1.42;
+  const fsName = isMobile ? 14 : 9;
+  const fsVal  = isMobile ? 26 : 18;
+  const fsSub  = isMobile ? 12 : 9;
+  const fsNeut = isMobile ? 11 : 8;
+  const dyVal  = isMobile ? 22 : 15;
+  const dySub  = isMobile ? 18 : 13;
   const labels = metrics.map((m,i) => {
     const a = angles[i];
     const [lx,ly] = pt(a, LF);
     const anchor = Math.abs(Math.cos(a)) < 0.2 ? 'middle' : Math.cos(a) > 0 ? 'start' : 'end';
-    // vertical start: center 3-line block (~42px) on label point for sides; top/bottom grow away from pentagon
-    const blockH = 42;
-    const yName = Math.sin(a) < -0.3 ? ly        // top: grow downward
-                : Math.sin(a) >  0.3 ? ly        // bottom: grow downward
-                : ly - blockH/2;                 // sides: center
+    const blockH = isMobile ? 62 : 42;
+    const yName = Math.sin(a) < -0.3 ? ly
+                : Math.sin(a) >  0.3 ? ly
+                : ly - blockH/2;
     const neutral = m.neutral !== null
-      ? `<tspan x="${lx.toFixed(1)}" dy="11" font-size="8" fill="#555" letter-spacing="0.1em">NEUTRAL = CENTER</tspan>`
+      ? `<tspan x="${lx.toFixed(1)}" dy="${isMobile?15:11}" font-size="${fsNeut}" fill="#555" letter-spacing="0.1em">NEUTRAL = CENTER</tspan>`
       : '';
     return `<text text-anchor="${anchor}" font-family="monospace">
-      <tspan x="${lx.toFixed(1)}" y="${yName.toFixed(1)}" font-size="9" fill="#888" font-weight="700" letter-spacing="0.16em">${m.name.toUpperCase()}</tspan>
-      <tspan x="${lx.toFixed(1)}" dy="15" font-size="18" fill="#d4af37" font-weight="800">${m.display}</tspan>
-      <tspan x="${lx.toFixed(1)}" dy="13" font-size="9" fill="#555" letter-spacing="0.1em">${m.sub.toUpperCase()}</tspan>
+      <tspan x="${lx.toFixed(1)}" y="${yName.toFixed(1)}" font-size="${fsName}" fill="#888" font-weight="700" letter-spacing="0.16em">${m.name.toUpperCase()}</tspan>
+      <tspan x="${lx.toFixed(1)}" dy="${dyVal}" font-size="${fsVal}" fill="#d4af37" font-weight="800">${m.display}</tspan>
+      <tspan x="${lx.toFixed(1)}" dy="${dySub}" font-size="${fsSub}" fill="#555" letter-spacing="0.1em">${m.sub.toUpperCase()}</tspan>
       ${neutral}
     </text>`;
   }).join('');
