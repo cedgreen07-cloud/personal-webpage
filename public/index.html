@@ -243,9 +243,8 @@ select option{background:var(--surface2)}
   </div>
 
   <div id="home-radar-outer" style="display:flex;justify-content:center;width:100%">
-    <div id="home-radar-wrap" style="position:relative;width:540px;max-width:100%;flex-shrink:0">
-      <svg id="home-radar-svg" viewBox="0 0 540 540" style="width:100%;height:auto;overflow:visible;display:block"></svg>
-      <div id="home-radar-labels"></div>
+    <div id="home-radar-wrap" style="width:100%;max-width:700px">
+      <svg id="home-radar-svg" viewBox="0 0 700 640" style="width:100%;height:auto;display:block"></svg>
     </div>
   </div>
 </section>
@@ -516,7 +515,8 @@ function homeRender() {
   ];
 
   // ── Radar geometry ──────────────────────────────────────────────
-  const cx=270, cy=270, R=180;
+  // ── Radar geometry (wider viewBox so labels fit on all screen sizes) ──
+  const cx=350, cy=290, R=180;
   const angles = Array.from({length:5}, (_,i) => -Math.PI/2 + i*2*Math.PI/5);
 
   const pt = (a, f) => [cx + f*R*Math.cos(a), cy + f*R*Math.sin(a)];
@@ -528,11 +528,32 @@ function homeRender() {
 
   const dataPoints = metrics.map((m,i) => pt(angles[i], m.val));
   const dataPath   = dataPoints.map(([x,y],i)=>(i===0?'M':'L')+x.toFixed(1)+','+y.toFixed(1)).join(' ')+' Z';
-  const [nx,ny]    = pt(angles[3], 0.5);
 
   const gridRings = [1,.75,.5,.25].map(f=>`<path d="${penta(f)}" fill="none" stroke="#1e1e1e" stroke-width="1"/>`).join('');
   const axisLines = angles.map(a=>{const[x,y]=pt(a,1);return`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#1e1e1e" stroke-width="1"/>`;}).join('');
   const dots      = dataPoints.map(([x,y])=>`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="#1a1a1c" stroke="#d4af37" stroke-width="2" filter="url(#hglow)"/>`).join('');
+
+  // ── Labels rendered inside SVG so they scale with it ──────────────
+  const LF = 1.42;
+  const labels = metrics.map((m,i) => {
+    const a = angles[i];
+    const [lx,ly] = pt(a, LF);
+    const anchor = Math.abs(Math.cos(a)) < 0.2 ? 'middle' : Math.cos(a) > 0 ? 'start' : 'end';
+    // vertical start: center 3-line block (~42px) on label point for sides; top/bottom grow away from pentagon
+    const blockH = 42;
+    const yName = Math.sin(a) < -0.3 ? ly        // top: grow downward
+                : Math.sin(a) >  0.3 ? ly        // bottom: grow downward
+                : ly - blockH/2;                 // sides: center
+    const neutral = m.neutral !== null
+      ? `<tspan x="${lx.toFixed(1)}" dy="11" font-size="8" fill="#555" letter-spacing="0.1em">NEUTRAL = CENTER</tspan>`
+      : '';
+    return `<text text-anchor="${anchor}" font-family="monospace">
+      <tspan x="${lx.toFixed(1)}" y="${yName.toFixed(1)}" font-size="9" fill="#888" font-weight="700" letter-spacing="0.16em">${m.name.toUpperCase()}</tspan>
+      <tspan x="${lx.toFixed(1)}" dy="15" font-size="18" fill="#d4af37" font-weight="800">${m.display}</tspan>
+      <tspan x="${lx.toFixed(1)}" dy="13" font-size="9" fill="#555" letter-spacing="0.1em">${m.sub.toUpperCase()}</tspan>
+      ${neutral}
+    </text>`;
+  }).join('');
 
   document.getElementById('home-radar-svg').innerHTML = `
     <defs>
@@ -548,26 +569,8 @@ function homeRender() {
     ${gridRings}${axisLines}
     <path d="${dataPath}" fill="url(#hfill)"/>
     <path d="${dataPath}" fill="none" stroke="#d4af37" stroke-width="2" stroke-linejoin="round" filter="url(#hglow)"/>
-    ${dots}`;
-
-  // ── Labels ──────────────────────────────────────────────────────
-  const labelsDiv = document.getElementById('home-radar-labels');
-  labelsDiv.innerHTML = '';
-  const LO = 56;
-  metrics.forEach((m,i) => {
-    const a = angles[i];
-    const [lx,ly] = pt(a, 1);
-    const ox=(lx-cx)/R*LO, oy=(ly-cy)/R*LO;
-    const align = Math.abs(Math.cos(a))<0.2 ? 'center' : Math.cos(a)<0 ? 'right' : 'left';
-    const d = document.createElement('div');
-    d.style.cssText = `position:absolute;width:110px;left:${(lx+ox-55).toFixed(0)}px;top:${(ly+oy-30).toFixed(0)}px;text-align:${align};pointer-events:none`;
-    d.innerHTML = `
-      <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:#888;display:block;margin-bottom:4px;font-family:var(--mono)">${m.name}</span>
-      <span style="font-size:18px;font-weight:800;color:var(--accent);display:block;line-height:1;font-family:var(--mono)">${m.display}</span>
-      <span style="font-size:9px;color:#555;display:block;margin-top:3px;text-transform:uppercase;letter-spacing:.12em;font-family:var(--mono)">${m.sub}</span>
-      ${m.neutral!==null?'<span style="font-size:8px;color:#555;text-transform:uppercase;letter-spacing:.1em;margin-top:2px;display:block;font-family:var(--mono)">↕ neutral = center</span>':''}`;
-    labelsDiv.appendChild(d);
-  });
+    ${dots}
+    ${labels}`;
 }
 
 // ─── WHOOP ────────────────────────────────────────────────────────────────────
