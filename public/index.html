@@ -496,8 +496,8 @@ function homeRender() {
   const calTxt = calEl ? calEl.childNodes[0].textContent.trim() : null;
   const calVal = calTxt && !isNaN(calTxt) ? Math.min(1, parseFloat(calTxt)/3800) : 0;
 
-  const earnTxt = (document.getElementById('wh-period-earnings')?.textContent || '').replace(/[$,]/g,'').trim();
-  const earnVal = earnTxt && !isNaN(earnTxt) ? Math.min(1, parseFloat(earnTxt)/2200) : 0;
+  const todayHrs = load('workHours').filter(l => l.date === today()).reduce((s,l) => s + l.hours, 0);
+  const earnVal = Math.min(1, todayHrs / 10);
 
   const dayPct = typeof window.invDayPct === 'number' ? window.invDayPct : 0;
   const invVal = Math.max(0, Math.min(1, 0.5 + dayPct/0.06));
@@ -509,7 +509,7 @@ function homeRender() {
 
   const metrics = [
     { name:'Whoop',       val:recVal,  display: recTxt  ? Math.round(recVal*100)+'%'                                    : '--', sub:'Recovery Score',     neutral:null },
-    { name:'Work Hours',  val:earnVal, display: earnTxt ? '$'+parseFloat(earnTxt).toLocaleString('en-US',{maximumFractionDigits:0}) : '--', sub:'Pay Period Earnings', neutral:null },
+    { name:'Work Hours',  val:earnVal, display: todayHrs > 0 ? todayHrs+'h' : '0h', sub:'Logged today / 10h', neutral:null },
     { name:'Habits',      val:habVal,  display: habTxt  ? Math.round(habVal*100)+'%'                                    : '--', sub:"Today's Completion",  neutral:null },
     { name:'Investments', val:invVal,  display: invDisplay,                                                                      sub:'Portfolio today',    neutral:0.5  },
     { name:'Nutrition',   val:calVal,  display: calTxt  ? parseFloat(calTxt).toLocaleString()                           : '--', sub:'of 3,800 kcal',      neutral:null },
