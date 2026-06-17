@@ -495,8 +495,14 @@ function homeRender() {
   const calTxt = calEl ? calEl.childNodes[0].textContent.trim() : null;
   const calVal = calTxt && !isNaN(calTxt) ? Math.min(1, parseFloat(calTxt)/3800) : 0;
 
-  const todayHrs = load('workHours').filter(l => l.date === today()).reduce((s,l) => s + l.hours, 0);
-  const earnVal = Math.min(1, todayHrs / 10);
+  const ppAnchor = new Date('2025-01-06T00:00:00Z');
+  const msPerPeriod = 14 * 24 * 60 * 60 * 1000;
+  const ppIdx = Math.floor((Date.now() - ppAnchor) / msPerPeriod);
+  const ppStart = new Date(ppAnchor.getTime() + ppIdx * msPerPeriod).toISOString().slice(0,10);
+  const ppEnd   = new Date(ppAnchor.getTime() + (ppIdx+1) * msPerPeriod).toISOString().slice(0,10);
+  const ppHours = load('workHours').filter(l => l.date >= ppStart && l.date < ppEnd).reduce((s,l) => s+l.hours, 0);
+  const ppEarnings = ppHours * (1760 / 80);
+  const earnVal = Math.min(1, ppEarnings / 1760);
 
   const dayPct = typeof window.invDayPct === 'number' ? window.invDayPct : 0;
   const invVal = Math.max(0, Math.min(1, 0.5 + dayPct/0.06));
@@ -508,7 +514,7 @@ function homeRender() {
 
   const metrics = [
     { name:'Whoop',       val:recVal,  display: recTxt  ? Math.round(recVal*100)+'%'                                    : '--', sub:'Recovery Score',     neutral:null },
-    { name:'Work Hours',  val:earnVal, display: todayHrs > 0 ? todayHrs+'h' : '0h', sub:'Logged today / 10h', neutral:null },
+    { name:'Work Hours',  val:earnVal, display: ppEarnings > 0 ? '$'+Math.round(ppEarnings).toLocaleString() : '$0', sub:'', neutral:null },
     { name:'Habits',      val:habVal,  display: habTxt  ? Math.round(habVal*100)+'%'                                    : '--', sub:"Today's Completion",  neutral:null },
     { name:'Investments', val:invVal,  display: invDisplay,                                                                      sub:'Portfolio today',    neutral:0.5  },
     { name:'Nutrition',   val:calVal,  display: calTxt  ? parseFloat(calTxt).toLocaleString()                           : '--', sub:'of 3,800 kcal',      neutral:null },
@@ -550,14 +556,9 @@ function homeRender() {
     const yName = Math.sin(a) < -0.3 ? ly
                 : Math.sin(a) >  0.3 ? ly
                 : ly - blockH/2;
-    const neutral = m.neutral !== null
-      ? `<tspan x="${lx.toFixed(1)}" dy="${isMobile?15:11}" font-size="${fsNeut}" fill="#555" letter-spacing="0.1em">NEUTRAL = CENTER</tspan>`
-      : '';
     return `<text text-anchor="${anchor}" font-family="monospace">
       <tspan x="${lx.toFixed(1)}" y="${yName.toFixed(1)}" font-size="${fsName}" fill="#888" font-weight="700" letter-spacing="0.16em">${m.name.toUpperCase()}</tspan>
       <tspan x="${lx.toFixed(1)}" dy="${dyVal}" font-size="${fsVal}" fill="#d4af37" font-weight="800">${m.display}</tspan>
-      <tspan x="${lx.toFixed(1)}" dy="${dySub}" font-size="${fsSub}" fill="#555" letter-spacing="0.1em">${m.sub.toUpperCase()}</tspan>
-      ${neutral}
     </text>`;
   }).join('');
 
