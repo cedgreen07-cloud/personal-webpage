@@ -767,22 +767,29 @@ async function fatsecretDisconnect() {
 }
 
 async function fatsecretFetchDiary(date) {
-  // Never cache today's diary so newly-logged FatSecret entries show up immediately.
   if (date !== today() && fatsecretDiaryCache[date]) return fatsecretDiaryCache[date];
   try {
-    const data = await fetch(`/api/fatsecret/diary?date=${date}`).then(r=>r.json());
+    const res  = await fetch(`/api/fatsecret/diary?date=${date}`);
+    const data = await res.json();
+    if (!res.ok) {
+      console.error('FatSecret diary error:', data);
+      document.getElementById('fatsecret-banner-sub').textContent = 'Diary fetch failed: ' + (data.error || res.status) + ' — try disconnecting and reconnecting.';
+      return [];
+    }
     const entries = (data.entries || []).map(e => ({
       id:      'fs-' + e.food_entry_id,
       name:    e.food_entry_name || e.food_name || 'Food',
-      cal:     +e.calories || 0,
-      protein: +e.protein  || 0,
-      carbs:   +e.carbohydrate || 0,
-      fat:     +e.fat || 0,
+      cal:     Math.round(+e.calories  || 0),
+      protein: Math.round(+e.protein   || 0),
+      carbs:   Math.round(+e.carbohydrate || 0),
+      fat:     Math.round(+e.fat       || 0),
       source:  'fatsecret',
     }));
+    console.log('FatSecret diary for', date, ':', entries.length, 'entries', entries);
     fatsecretDiaryCache[date] = entries;
     return entries;
-  } catch {
+  } catch(e) {
+    console.error('FatSecret fetch exception:', e);
     return [];
   }
 }
