@@ -333,8 +333,10 @@ app.get('/api/quote', async (req, res) => {
       const r = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}`, {
         headers: { 'User-Agent': 'Mozilla/5.0' }
       });
-      const price = r.data?.chart?.result?.[0]?.meta?.regularMarketPrice;
-      if (typeof price === 'number') out[sym] = price;
+      const meta  = r.data?.chart?.result?.[0]?.meta;
+      const price = meta?.regularMarketPrice;
+      const prev  = meta?.chartPreviousClose ?? meta?.previousClose;
+      if (typeof price === 'number') out[sym] = { price, prev: prev ?? null };
     } catch (e) {
       console.error(`Quote fetch failed for ${sym}:`, e.message);
     }

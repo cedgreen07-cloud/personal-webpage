@@ -470,6 +470,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'whoop') whoopInit();
     if (btn.dataset.tab === 'nutrition') fatsecretInit();
     if (btn.dataset.tab === 'home') homeRender();
+    if (btn.dataset.tab === 'investments') invRefreshPrices();
   });
 });
 
@@ -990,9 +991,19 @@ async function invRefreshPrices() {
     const quotes = await fetch('/api/quote?symbols=' + symbols.map(encodeURIComponent).join(',')).then(r=>r.json());
     let updated = 0;
     holdings.forEach(h => {
-      if (typeof quotes[h.ticker] === 'number') { h.curPx = quotes[h.ticker]; updated++; }
+      const q = quotes[h.ticker];
+      if (q && typeof q.price === 'number') { h.curPx = q.price; updated++; }
     });
     save('holdings', holdings);
+    // Seed yesterday's balance from previous close prices so % change works on any device
+    const cash = parseFloat(document.getElementById('inv-cash').value) || 0;
+    const prevTotal = holdings.reduce((s, h) => {
+      const q = quotes[h.ticker];
+      return s + (q && typeof q.prev === 'number' ? h.shares * q.prev : (typeof h.curPx === 'number' ? h.shares * h.curPx : 0));
+    }, cash);
+    const balHist = loadO('invBalanceHistory');
+    const yest = (() => { const d=new Date(today()+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()-1); return d.toISOString().slice(0,10); })();
+    if (!balHist[yest] && prevTotal > 0) { balHist[yest] = prevTotal; save('invBalanceHistory', balHist); }
     invRender();
     status.textContent = updated
       ? `Live prices updated ${new Date().toLocaleTimeString()}`
