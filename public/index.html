@@ -496,7 +496,7 @@ function homeRender() {
   const calTxt = calEl ? calEl.childNodes[0].textContent.trim() : null;
   const calVal = calTxt && !isNaN(calTxt) ? Math.min(1, parseFloat(calTxt)/3800) : 0;
 
-  const ppAnchor = new Date('2025-01-07T00:00:00Z');
+  const ppAnchor = new Date('2025-01-06T00:00:00Z');
   const msPerPeriod = 14 * 24 * 60 * 60 * 1000;
   const ppIdx = Math.floor((Date.now() - ppAnchor) / msPerPeriod);
   const ppStart = new Date(ppAnchor.getTime() + ppIdx * msPerPeriod).toISOString().slice(0,10);
