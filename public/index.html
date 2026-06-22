@@ -910,12 +910,12 @@ function whAdd() {
   logs.unshift({ id: uid(), date, hours });
   save('workHours', logs);
   document.getElementById('wh-hours').value = '';
-  whPopPeriods(); whRender();
+  whPopPeriods(); whRender(); homeRender();
 }
 
 function whDelete(id) {
   save('workHours', load('workHours').filter(l => l.id != id));
-  whPopPeriods(); whRender();
+  whPopPeriods(); whRender(); homeRender();
 }
 
 function whPopPeriods() {
